@@ -12,11 +12,15 @@ In this project, we will explore the merit of using geographic clustering based 
 
 ## Data Source (candidates)
 Daily confirmed cases of Covid-19 by geography:
+
 •	Our World in Data - https://ourworldindata.org/coronavirus, https://github.com/owid/covid-19-data/tree/master/public/data 
-•	COVID-19 data in NSW - https://data.nsw.gov.au/data/dataset/nsw-covid-19-cases-by-location-and-likely-source-of-infection/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa
+
+•	COVID-19 data in NSW/AU - https://data.nsw.gov.au/data/dataset/nsw-covid-19-cases-by-location-and-likely-source-of-infection/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa
 
 Geographic attributes: 
+
 •	Australia census data – ABS 2016 Census Table Builder - https://www.abs.gov.au/websitedbs/D3310114.nsf/home/About+TableBuilder 
+
 •	US census data - https://www.census.gov/data.html 
 
 ## Methodology
