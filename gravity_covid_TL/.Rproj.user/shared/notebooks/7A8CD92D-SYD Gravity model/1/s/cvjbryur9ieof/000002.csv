@@ -1,0 +1,32 @@
+"0","```r
+wtp_data %>% 
+  select(Q4r1:Q4r6, wt) %>% 
+  rename(Work = Q4r1, 
+         Shop = Q4r2, 
+         School = Q4r3, 
+         Public_trans = Q4r4, 
+         Family_friend = Q4r5, 
+         Hospital = Q4r6) %>% 
+  bind_rows(wtp_data %>% 
+              select(Q5r1:Q5r6, wt) %>% 
+              rename(
+                Work = Q5r1,
+                Shop = Q5r2,
+                School = Q5r3,
+                Public_trans = Q5r4,
+                Family_friend = Q5r5,
+                Hospital = Q5r6)
+            ) %>%
+  gather(key,value, -wt) %>% 
+  group_by(key) %>% 
+  summarise(WTP = weighted.mean(value, wt, na.rm=T)) %>% 
+  
+  mutate(key = fct_relevel(key, key_var)) %>% 
+  ggplot(aes(x=key, y=WTP, fill=key)) +
+  geom_col(alpha = .9) + 
+  geom_text(aes(label = paste0(\"$\",round(WTP, 1))), nudge_y = .4) + 
+  ggf() +
+  ggy(dollar, \"Willingness to pay per trip\", pbn = 8) +
+  xlab(\"\") + 
+  ggl(\"none\")
+```"

@@ -1,0 +1,19 @@
+"0","```r
+data.frame(dist = seq(1,15,.001)) %>% 
+  mutate(`Driving/Transit` = ifelse(dist <= 10, 1/(.5*dist/20), 0), 
+         Cycling = ifelse(dist <= 2.5, 1/(1*dist/10), 0), 
+         Walking = ifelse(dist <= 1.5, 1/(1*dist/6), 0)) %>% 
+  gather(md,coef, -dist) %>% 
+  mutate(md = fct_relevel(md, \"Driving/Transit\",\"Cycling\")) %>% 
+  ggplot(aes(x=dist, y=coef, col=md)) + 
+  geom_line() + 
+  geom_hline(yintercept = 4, linetype=2, col=\"grey50\") + 
+  annotate(\"text\", y=3.5, x=12.5, label = \"30 min city accessibility\", col=\"grey50\") + 
+  # geom_vline(xintercept = c(1.5,2.5,5), linetype = 2, aes(col=md)) + 
+  scale_x_continuous(name = \"Distance (km)\", breaks = c(1.5,2.5,5,10,15)) + 
+  scale_y_continuous(name = \"Accessibility\", limit = c(0,20), 
+      breaks = c(4,8,12,16,29), label = function(x) ifelse(x == 4,0,\"\")) +
+  ggc(fc = DC) + 
+  ggl(c(.85,.9)) +
+  theme(axis.ticks.y = element_blank())
+```"

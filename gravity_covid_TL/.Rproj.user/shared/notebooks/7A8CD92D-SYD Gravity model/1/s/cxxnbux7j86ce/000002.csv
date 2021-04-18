@@ -1,0 +1,16 @@
+"0","```r
+SYD_dt %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id), map = SYD_tidy, col=\"grey50\", size=.1, fill=\"white\") +
+  geom_line(data = trains, aes(x=lon, y=lat, group = `Railway line(s)`),
+             size=1, col=\"orange\") +
+  geom_line(data = ferries, aes(x=lon, y=lat),
+             size=1, col=DC[3]) +
+  geom_line(data = lightrails, aes(x=lon, y=lat),
+             size=1, col=\"red\") +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  theme_void() +
+  theme(legend.position = c(.9,.15))
+```"

@@ -1,0 +1,48 @@
+"0","```r
+sbt_lc <- function(dir = \"To CBD\", md = \"Driving\", bt = \"00:00\", dcol = F, 
+                   df = filter(data1, km < 60), 
+                   yl = c(.6,2.5)) {
+  
+  min_base <- data1 %>% 
+    filter(time == bt, direction == dir, mode == \"Driving\") %>% 
+    select(id,SA2,minutes_tf)
+  
+  pd <- df %>%
+    filter(time != \"00:00\", direction == dir, mode %in% md) %>% 
+    # select(id, time, minutes_tf, SA2) %>% 
+    rename(key = time, value = minutes_tf) %>% 
+    mutate(value = value/min_base$minutes_tf[.match(SA2, min_base$SA2)])
+  
+  g1 <- pd %>% 
+    ggplot(aes(x=as.numeric(as.factor(key)), y=value, group =interaction(id,mode)))
+    
+  # browser()
+  if (length(md) == 2) g1 <- g1 + geom_line(alpha=.2, aes(col=mode))
+  else if (dcol) g1 <- g1 + geom_line(alpha=.2, aes(col=fvar))
+  else g1 <- g1 + geom_line(alpha=.05) + 
+    geom_line(data = pd %>% group_by(key) %>% summarise(value = mean(value, na.rm=T)), 
+              aes(x=as.numeric(as.factor(key)), y=value, group=\"1\"),
+              col = DC[2], size=1) + 
+    geom_point(data = pd %>% group_by(key) %>% summarise(value = mean(value, na.rm=T)), 
+              aes(x=as.numeric(as.factor(key)), y=value, group=\"1\"),
+              col = DC[2], size=1.5)
+  
+  g1 +
+    ggl(\"right\") + 
+    ggc() + 
+    scale_x_continuous(breaks = 1:6, 
+                       labels = paste0(seq(5,20,3), \":30\"), 
+                       name = \"Time of the day\") + 
+    ggy(percent, name=paste0(\"Travel time as % of \nTravel time (Driving) at \",bt), 
+        pbn = 8, 
+        limit = yl) +
+    labs(subtitle = paste0(md, \" \", dir, \" < 60 km\"))
+  
+}
+grid.arrange(
+  sbt_lc(), 
+  sbt_lc(md = \"Transit\"),
+  sbt_lc(dir = \"From CBD\"), 
+  sbt_lc(dir = \"From CBD\", md = \"Transit\"),
+ncol = 2)
+```"

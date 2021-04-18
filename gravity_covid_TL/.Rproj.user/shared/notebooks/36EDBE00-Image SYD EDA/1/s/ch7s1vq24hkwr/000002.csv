@@ -1,0 +1,12 @@
+"0","```r
+tt <- 10
+top_tt <- wvr %>% 
+  filter(area %in% c(work$area[1:tt],live$area[1:tt])) %>% 
+  .[names(wvr) %in% c(\"area\",work$area[1:tt],live$area[1:tt])] %>% 
+  arrange(area) %>% 
+  .[,c(\"area\",.$area)]
+top_ttm <- as.matrix(top_tt[,-1])
+rownames(top_ttm) <- top_tt$area
+d3heatmap(top_ttm, scale = \"none\", colors = \"Blues\", cexRow = .8, dendrogram = \"none\", 
+                     yaxis_width = 200, xaxis_height = 150, width = 1000, height = 500)
+```"

@@ -1,0 +1,26 @@
+"0","```r
+work_DAE %>% 
+  filter(Region %in% c(\"Sydney - Haymarket - The Rocks\", 
+                       \"Parramatta - Rosehill\"
+                       # \"North Sydney - Lavender Bay\", 
+                       # \"Macquarie Park - Marsfield\"
+                       )) %>% 
+  gather(year, value, -Region) %>% 
+  # mutate(value = value/(work_DAE %>% 
+  #                         filter(Region %in% c(\"Sydney - Haymarket - The Rocks\", 
+  #                                              \"Parramatta - Rosehill\", 
+  #                                              \"North Sydney - Lavender Bay\", 
+  #                                              \"Macquarie Park - Marsfield\")) %>% 
+  #                         gather(year, value, -Region) %>% 
+  #                         filter(year == \"2016-17\") %>% 
+  #                         .[[\"value\"]])) %>% 
+  filter(as.numeric(str_sub(year, 1, 4)) <= 2036) %>% 
+  
+  ggplot(aes(x=year, y=value, col=Region, group=Region)) + 
+  geom_line() + 
+  geom_hline(yintercept = 0, linetype = 2) + 
+  ggl(\"top\") + 
+  ggy(comma, name = \"# of jobs\", pbn = 8) + 
+  # ggy(percent, name = \"% of employeed persons vs 2016-17\", pbn = 8) +
+  ggvxl(ag = 45, vj = 1, hj= 1)
+```"

@@ -1,0 +1,10 @@
+"0","```r
+.count(wtp_data, Suburb) %>% 
+  mutate(Suburb = str_wrap(Suburb, 10)) %>% 
+  ggplot(aes(x=Suburb, y=percent)) + 
+  geom_col(fill=DC[1]) + 
+  ggy(percent, \"\") + 
+  xlab(\"\") + 
+  ggf() + 
+  ggl(\"top\")
+```"

@@ -1,0 +1,17 @@
+"0","```r
+allrank %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill= oldrank - newrank), 
+           col = \"white\", map = SYD_tidy, col=\"grey50\", size=.1) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  scale_fill_gradient(low=\"white\", high=DC[1]) +
+  # scale_fill_gradientn(colours = colorRampPalette(c(DC[c(3,4,2,5,6)], \"orange\", \"red\") %>% rev)(10),
+  #                      # values = c(.05,seq(.2,1,length.out = 9)),
+  #                      na.value = \"white\") + 
+  scale_alpha_continuous(range = c(0,.3)) + 
+  theme_void() +
+  theme(legend.position = \"none\")
+```"

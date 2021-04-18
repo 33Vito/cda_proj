@@ -1,0 +1,30 @@
+"0","```r
+g1 <- dd %>%
+  # filter(km < 50) %>% 
+  ggplot(aes(x=log(gravity), y=weighted.time, fill=ratio, label=SA2, size=edu)) + 
+  geom_point(alpha = .4, col=DC[7], stroke=1, shape=21) + 
+  # scale_color_gradient(low = DC[3], high = DC[5], labels = percent) +
+  # scale_fill_gradient(low = DC[3], high = DC[5], labels = percent) +
+  scale_fill_viridis(name = \"Percentage_CBD\", labels = percent) +
+  scale_size_continuous(name = \"Bachelor or above\", labels = percent) + 
+  # geom_text_repel(aes(label = ifelse(SA2 %in% c(\"Sydney - Haymarket - The Rocks\", 
+  #                                              \"Parramatta - Rosehill\", 
+  #                                              \"North Parramatta\",
+  #                                              \"North Sydney - Lavender Bay\", 
+  #                                              \"Pyrmont - Ultimo\", 
+  #                                              \"Potts Point - Woolloomooloo\", 
+  #                                              \"Macquarie Park - Marsfield\", 
+  #                                              \"Royal National Park\"), SA2, \"\"), 
+  #                     col = ifelse(SA2 %in% c(\"Parramatta - Rosehill\", 
+  #                                            \"North Parramatta\"), \"red\", NA)), 
+  #                 size=3, 
+  #                 box.padding = unit(0.3, \"lines\"),
+  #                 point.padding = unit(0.3, \"lines\"),
+  #                 segment.color = 'grey50') + 
+  stat_smooth(method = \"lm\", col=DC[7], size=.1) +
+  # ggx(limit = c(10,15)) +
+  # ggy(percent, name = \"% of people working at CBD\", pbn = 8) + 
+  ggy(comma, \"Weighted avg commute time\",pbn = 8) +
+  ggl(\"right\", lt = T, pf = \"w\")
+ggExtra::ggMarginal(g1, type = \"hist\")
+```"

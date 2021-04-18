@@ -1,0 +1,26 @@
+"0","```r
+# stime %>% 
+#   mutate(pop = live_DAE$`2026-27`[.match(SA2, live_DAE$Region)]) %>% 
+#   mutate(id = SYD_dt$id[.match(SA2, SYD_dt$SA2)]) %>% 
+#   mutate(`Time saving` = ifelse(d.time <= .5, 0, (d.time-.5)*ratio*pop)) %>% 
+weighted.wvr %>% 
+  mutate(id = SYD_dt$id[.match(SA2, SYD_dt$SA2)]) %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill=weighted.time), map = SYD_tidy, col=\"grey50\", size=.1) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  # coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  # xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  scale_fill_gradient(low=\"white\", high=DC[2],
+                      labels = function(x) paste0(comma(x), \" minutes\")) +
+  # scale_fill_gradientn(colors = c(\"white\", DC[2], \"Orange\"), 
+  #                      values = c(0,.5,.8, 1),
+  #                      label = function(x) paste0(comma(x), \" hours\"),
+  #                      breaks = pretty_breaks(5), 
+  #                      # limit = c(0,cmax),
+  #                      name = \"\", 
+  #                      na.value = DC[7]) +
+  scale_alpha_continuous(range = c(0,.3)) + 
+  theme_void() +
+  theme(legend.position = c(.9,.15))
+```"

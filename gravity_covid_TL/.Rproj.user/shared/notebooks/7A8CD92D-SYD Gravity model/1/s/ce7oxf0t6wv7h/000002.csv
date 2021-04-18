@@ -1,0 +1,23 @@
+"0","```r
+live_DAE %>% 
+  filter(Region %in% SYD_dt_2011$SA2) %>% 
+  rename(SA2 = Region) %>% 
+  mutate(id = SYD_dt_2011$id[.match(SA2, SYD_dt_2011$SA2)]) %>% 
+  mutate(area = SYD_dt_2011$area[.match(SA2, SYD_dt_2011$SA2)]) %>% 
+  mutate(`pop share of total` = `2036-37`/sum(`2036-37`)) %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill= `pop share of total`), 
+           col = \"white\", map = SYD_tidy_2011, col=\"grey50\", size=.1) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  scale_fill_gradient(low=\"white\", high=\"red\", labels = percent, 
+                      limits = c(0,0.012), breaks = seq(0,0.01,0.002), na.value = \"red\") +
+  # scale_fill_gradientn(colours = colorRampPalette(c(DC[c(3,4,2,5,6)], \"orange\", \"red\") %>% rev)(10),
+  #                      # values = c(.05,seq(.2,1,length.out = 9)),
+  #                      na.value = \"white\") + 
+  # scale_alpha_continuous(range = c(0,.3)) + 
+  theme_void() +
+  theme(legend.position = c(.9, .15))
+```"

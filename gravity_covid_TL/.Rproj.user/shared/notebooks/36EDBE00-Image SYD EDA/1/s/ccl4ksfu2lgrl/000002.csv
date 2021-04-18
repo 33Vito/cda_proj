@@ -1,0 +1,8 @@
+"0","```r
+wvm <- readxl::read_excel(\"Work vs Method of travel.xlsx\", range = \"B9:IE260\")[-1,]
+names(wvm)[1] <- \"area\"
+lvm <- readxl::read_excel(\"Residence vs Method of travel.xlsx\", range = \"B9:IE260\")[-1,]
+names(lvm)[1] <- \"area\"
+mot <- readxl::read_excel(\"Method of travel.xlsx\", range = \"A9:B246\")
+names(mot) <- c(\"method\", \"count\")
+```"

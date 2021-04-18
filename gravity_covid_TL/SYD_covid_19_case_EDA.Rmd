@@ -1,0 +1,252 @@
+---
+title: "SYD Covid-19 cases EDA"
+author: "Tony Liu"
+date: '`r Sys.Date()`'
+output:
+  html_notebook:
+    code_folding: hide
+    highlight: tango
+    theme: flatly
+    toc: yes
+    toc_float:
+      collapsed: no
+---
+
+```{r setup, include=FALSE}
+source("utility.R")
+
+options(scipen=999, expressions=50000, 
+        DT.options = list(pageLength = 8,
+                          scrollX = TRUE,
+                          dom = 'Bfrtip',
+                          buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), 
+                          autoWidth = TRUE)) 
+
+knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=4)
+# knitr::opts_knit$set(root.dir = "C:/Users/yanjliu/...", progress=FALSE)
+```
+
+# Load data
+
+```{r}
+confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
+glimpse(confirmed_cases)
+```
+# Time series
+## Daily
+
+```{r, fig.width=8, fig.height=4}
+confirmed_cases %>% 
+  count(notification_date) %>% 
+  ggplot(aes(x=notification_date , y=n)) + 
+  # geom_point() + 
+  geom_line() + 
+  labs(subtitle = "Daily new confirmed Covid-19 cases (NSW)") + 
+  ggl()
+```
+
+```{r, fig.width=8, fig.height=5}
+confirmed_cases %>% 
+  count(lhd_2010_name, notification_date) %>% 
+  ggplot(aes(x=notification_date , y=n, col=lhd_2010_name)) + 
+  # geom_point() + 
+  geom_line() + 
+  # facet_wrap(~lhd_2010_name) + 
+  labs(subtitle = "Daily new confirmed Covid-19 cases (NSW)") + 
+  ggl(lp = "right")
+```
+
+## Cumulative
+
+```{r, fig.width=8, fig.height=5}
+confirmed_cases %>% 
+  mutate(lhd_2010_name = ifelse(is.na(lhd_2010_name), "Unknown", lhd_2010_name)) %>%
+  count(lhd_2010_name, notification_date) %>% 
+  group_by(lhd_2010_name) %>% 
+  mutate(days_since_first_case = notification_date - min(notification_date)) %>% 
+  mutate(accumulated_cases = cumsum(n)) %>% 
+  mutate(lab = ifelse(notification_date == max(notification_date, na.rm=T), 
+                      lhd_2010_name, NA)) %>% 
+  
+  ggplot(aes(x=days_since_first_case , y=accumulated_cases, col=lhd_2010_name)) + 
+  # geom_point() + 
+  geom_line() + 
+  geom_text_repel(aes(label=lab), size=3.3, hjust=-.1, min.segment.length = 10) + 
+  # facet_wrap(~lhd_2010_name) + 
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (NSW), by region") + 
+  xlim(c(0,550)) +
+  ggl(lp = "none")
+```
+
+```{r, fig.width=9, fig.height=6}
+confirmed_cases %>% 
+  filter(lhd_2010_name %in% c("South Eastern Sydney", 
+                           "Northern Sydney", 
+                           "Western Sydney", 
+                           "South Western Sydney", 
+                           "Sydney") | is.na(lhd_2010_name)) %>% 
+  count(lhd_2010_name, postcode, notification_date) %>% 
+  group_by(lhd_2010_name, postcode) %>% 
+  mutate(days_since_first_case = notification_date - min(notification_date)) %>% 
+  mutate(accumulated_cases = cumsum(n)) %>% 
+  mutate(lab=ifelse(notification_date == max(notification_date), postcode, NA)) %>% 
+  
+  ggplot(aes(x=days_since_first_case , y=accumulated_cases, 
+             group=postcode,
+             col=lhd_2010_name)) + 
+  # geom_point() + 
+  geom_line() + 
+  geom_text(aes(label=lab), size=3) + 
+  facet_wrap(~lhd_2010_name, scales = "free_y") +
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (Sydney), by postcode") + 
+  xlim(c(0,550)) +
+  ggl(lp = "none", )
+```
+
+# Map
+
+Looks like each postcode (POA) can only belong to one LGA, which is not the case for SA2
+
+```{r}
+confirmed_cases %>% 
+  distinct(postcode, lga_name19) %>% 
+  count(postcode) %>% 
+  summarise(max(n)) %>% 
+  pull()
+```
+
+
+## LGA
+
+```{r}
+SYD_POA <- readRDS("data/SYD_POA.rds")
+SYD_LGA <- readRDS("data/SYD_LGA.rds")
+```
+
+```{r, fig.width=10, fig.height=7}
+plot_map_TL <- function(df, sdf, key_var, fill_var, title_text) {
+  # browser()
+  df['id'] <- unique(fortify(sdf)$id)[match(df[[key_var]], 
+                                            sdf[[key_var]])] %>% as.character()
+  sdf_tidy <- fortify(sdf) %>% 
+    left_join(df, by="id")
+  
+  gg_map <- ggplot(sdf_tidy) +
+    geom_map(inherit.aes = FALSE, alpha=.85,
+             aes_string(map_id = "id", fill= fill_var),
+             map = sdf_tidy, col="grey83", size=NA) +
+    expand_limits(x = sdf_tidy$long, y = sdf_tidy$lat) +
+    # xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+    # scale_fill_gradient(low="white", high="darkred") +
+    scale_fill_viridis_c(breaks = pretty_breaks(5)) +
+    scale_alpha_continuous(range = c(0,.3)) +
+    labs(title = title_text) + 
+    theme_void() +
+    # theme(legend.position = "right")
+    theme(legend.position = c(.93,.15))
+  
+  gg_bar <- df %>% 
+    # top_n(20) %>% # There is a bug in top_n()
+    slice_max(order_by = !!as.name(fill_var), n=20) %>% 
+    ggplot(aes_string(x=key_var, y=fill_var, fill=fill_var)) + 
+    geom_col(width=.8) + 
+    geom_text(aes_string(label=fill_var), 
+              hjust=0, vjust=.3, size=3.3, col="black") + 
+    scale_fill_viridis_c(breaks = pretty_breaks(5)) +
+    coord_flip() + 
+    xlab("") + 
+    ylim(c(0, 1.1*max(df[[fill_var]], na.rm=T))) + 
+    labs(subtitle = paste0("Top 20 ", key_var)) + 
+    ggl() + 
+    theme(legend.position = "none")
+  
+  gg_map + gg_bar + plot_layout(widths = c(3, 1))
+}
+
+confirmed_cases %>% 
+  filter(lga_name19 %in% SYD_LGA$LGA_NAME19) %>% 
+  count(lga_name19, name="Total_cases") %>% 
+  rename(LGA_NAME19 = lga_name19) %>% 
+  mutate(LGA_NAME19 = fct_reorder(LGA_NAME19, Total_cases)) %>% 
+  plot_map_TL(SYD_LGA, "LGA_NAME19", "Total_cases", 
+           "Total Covid-19 cases by LGA (SYD Metro)")
+```
+
+## POA
+
+```{r, fig.width=10, fig.height=7}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  count(postcode, name="Total_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+           "Total Covid-19 cases by POA (SYD Metro)")
+```
+
+```{r, fig.width=10, fig.height=7}
+confirmed_cases %>% 
+  filter(!(postcode %in% c(2026, 2145, 2170))) %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  count(postcode, name="Total_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+           "Total Covid-19 cases by POA (SYD Metro), excluding top 3 POA")
+```
+
+## Note
+
+Northern Beaches has many postcodes which result in more diluted choropleth by POA.
+
+```{r, fig.width=8, fig.height=6}
+confirmed_cases %>% 
+  distinct(lga_name19, postcode) %>% 
+  count(lga_name19, name="Number_of_postcodes") %>% 
+  left_join(confirmed_cases %>% count(lga_name19, name="Total_cases"), 
+            by="lga_name19") %>% 
+  slice_max(n=30, order_by = Total_cases) %>% 
+  gather(key, value, -lga_name19) %>% 
+  ggplot(aes(x=reorder(lga_name19, value), y=value)) + 
+  geom_col() + 
+  facet_wrap(~key, scales = "free_x") + 
+  coord_flip() + 
+  xlab("") + ylab("") + 
+  ggl()
+```
+
+
+```{r, fig.width=8, fig.height=6}
+confirmed_cases %>% 
+  count(lga_name19, postcode) %>% 
+  mutate(lga_name19 = fct_reorder(lga_name19, -n, .fun = sum)) %>% 
+  # arrange(lga_name19) %>% 
+  mutate(case_range = cut(n, c(0,10,20,30,Inf))) %>% 
+  
+  ggplot(aes(x=n, col=lga_name19)) + 
+  geom_density() + 
+  facet_wrap(~case_range, scales = "free_x", label = "label_both") + 
+  # xlim(0,50) + 
+  ggl(lp = "none")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

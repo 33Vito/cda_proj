@@ -1,0 +1,9 @@
+"0","```r
+pop_SYD %>% 
+  mutate(rank = allrank$newrank[.match(`SA2 (UR)`, allrank$SA2)]) %>% 
+  arrange(rank) %>% 
+  group_by(rank <= 50) %>% 
+  summarise(n = n(), pop = sum(count)) %>% 
+  mutate(percent = pop/sum(pop)) %>% 
+  add_row(n = sum(.$n), pop = sum(.$pop), percent = sum(.$percent))
+```"

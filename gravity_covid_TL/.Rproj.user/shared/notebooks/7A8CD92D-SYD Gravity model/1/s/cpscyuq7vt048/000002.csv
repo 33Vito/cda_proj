@@ -1,0 +1,33 @@
+"0","```r
+wvr[-nrow(wvr),-ncol(wvr)] %>% 
+  gather(live, count, -area) %>% 
+  rename(work = area) %>% 
+  group_by(live) %>% 
+  mutate(percent = count/sum(count)) %>% 
+  ungroup() %>% 
+  filter(
+    work %in% .GlobalEnv$work$area[1:50]
+    # live %in% .GlobalEnv$live$area[1:50]
+    ) %>% 
+  
+  # mutate(category = case_when(work == live ~ \"Own SA2\", 
+  #                             work == \"Sydney - Haymarket - The Rocks\" ~ \"CBD\", 
+  #                             work != live | work != \"Sydney - Haymarket - The Rocks\" ~ \"Other\")) %>% 
+  # group_by(category) %>% 
+  # summarise(count = sum(count)) %>% 
+  # mutate(share = count/sum(count))
+  
+  mutate(work = fct_reorder(work,count)) %>%
+  mutate(live = as.factor(live)) %>% 
+  mutate(live = factor(live, levels = levels(work))) %>%
+  # na.omit() %>% 
+  ggplot(aes(x=live, y=work, fill=count)) + 
+  geom_tile() + 
+  ggc(fc = c(\"white\",\"orange\")) + 
+  scale_fill_gradient(low = \"white\", high = DC[3]) + 
+  theme_classic() + 
+  theme(legend.position = \"none\") + 
+  ggvxl(vj = .5, hj = 1) + 
+  xlab(\"Places of residence\") + 
+  ylab(\"Places of work\")
+```"

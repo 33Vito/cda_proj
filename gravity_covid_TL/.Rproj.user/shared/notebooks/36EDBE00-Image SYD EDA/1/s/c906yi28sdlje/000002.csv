@@ -1,0 +1,6 @@
+"0","```r
+wvr <- readxl::read_excel(\"Work vs Residence.xlsx\", range = \"B9:IR260\")[-1,]
+names(wvr)[1] <- \"area\"
+work <- wvr[-nrow(wvr),] %>% select(area, Total) %>% rename(count = Total) %>% arrange(-count)
+live <- wvr[nrow(wvr),c(-1,-ncol(wvr))] %>% gather(area, count) %>% arrange(-count)
+```"

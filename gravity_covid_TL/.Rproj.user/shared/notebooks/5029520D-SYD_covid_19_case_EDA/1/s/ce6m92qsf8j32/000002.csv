@@ -1,0 +1,19 @@
+"0","confirmed_cases <- read_csv(""data/confirmed_cases_table1_location.csv"")"
+"0","glimpse(confirmed_cases)"
+"1","Rows: 5,174"
+"1",""
+"1","
+"
+"1","Columns: 6"
+"1",""
+"1","
+"
+"1","$ notification_date [3m[38;5;246m<date>[39m[23m 2020-01-25, 2020-01-25, 2020-01-25, 2020-01-27, 2020-03~
+$ postcode          [3m[38;5;246m<dbl>[39m[23m 2134, 2121, 2071, 2033, 2163, 2077, 2073, 2217, 2077, 22~
+$ lhd_2010_code     [3m[38;5;246m<chr>[39m[23m ""X700"", ""X760"", ""X760"", ""X720"", ""X710"", ""X760"", ""X760"", ~
+$ lhd_2010_name     [3m[38;5;246m<chr>[39m[23m ""Sydney"", ""Northern Sydney"", ""Northern Sydney"", ""South E~
+$ lga_code19        [3m[38;5;246m<dbl>[39m[23m 11300, 16260, 14500, 16550, 12850, 14000, 14500, 10500, ~
+$ lga_name19        [3m[38;5;246m<chr>[39m[23m ""Burwood (A)"", ""Parramatta (C)"", ""Ku-ring-gai (A)"", ""Ran~"
+"1",""
+"1","
+"

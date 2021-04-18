@@ -1,0 +1,19 @@
+"0","```r
+wvr.ratio(\"Sydney - Haymarket - The Rocks\") %>%
+  mutate(id = SYD_dt$id[.match(SA2, SYD_dt$SA2)]) %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill=ratio), map = SYD_tidy, col=\"grey50\", size=.1) +
+  # geom_point(data = SYD_dt, aes(x=V1, y=V2), col=DC[1], size=.5) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  scale_fill_gradientn(colors = c(\"white\", DC[2], DC[5]), 
+                       values = c(0,.5,.7,.8, 1),
+                       label = function(x) paste0(100*x, \" %\"), 
+                       breaks = pretty_breaks(5), 
+                       # limit = c(0,cmax),
+                       name = \"% working in CBD\", 
+                       na.value = DC[7]) +
+  theme_void() +
+  theme(legend.position = c(.9,.15))
+```"

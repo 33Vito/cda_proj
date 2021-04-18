@@ -1,0 +1,32 @@
+"0","```r
+work %>%
+  rename(SA2 = area, value = count) %>%
+# work_DAE %>%
+  # select(Region, `2016-17`) %>%
+  # rename(SA2 = Region, value = `2016-17`) %>%
+  gravity(cc = ., dcut = 10, dcoef = 1) %>% 
+  left_join(wvr.ratio(\"Sydney - Haymarket - The Rocks\"),
+            by = \"SA2\") %>% 
+  
+  filter(home > 0) %>% 
+  
+  ggplot(aes(x=log(gravity), y=ratio)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = ifelse(SA2 %in% c(\"Sydney - Haymarket - The Rocks\", 
+                                               \"Parramatta - Rosehill\", 
+                                               \"North Sydney - Lavender Bay\", 
+                                               \"Pyrmont - Ultimo\", 
+                                               \"Potts Point - Woolloomooloo\", 
+                                               \"Macquarie Park - Marsfield\", 
+                                               \"Royal National Park\"), SA2, \"\"), 
+                      col = ifelse(SA2 %in% c(\"Parramatta - Rosehill\", 
+                                             \"North Parramatta\"), \"red\", NA)), 
+                  size=3, 
+                  box.padding = unit(0.3, \"lines\"),
+                  point.padding = unit(0.3, \"lines\"),
+                  segment.color = 'grey50') + 
+  # stat_smooth() +
+  # ggx(limit = c(0,15)) +
+  ggy(percent, name = \"% of people working at CBD\", pbn = 8) + 
+  ggl(\"none\")
+```"

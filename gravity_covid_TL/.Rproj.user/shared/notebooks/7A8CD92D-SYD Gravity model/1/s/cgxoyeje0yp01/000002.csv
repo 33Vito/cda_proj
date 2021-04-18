@@ -1,0 +1,8 @@
+"0","```r
+# stime %>% 
+#   mutate(pop = live_DAE$`2016-17`[.match(SA2, live_DAE$Region)]) %>% 
+#   summarise(comma(2*sum(pop * ratio) * 16.26*20/60 * 250))
+dd %>% 
+  left_join(live %>% rename(SA2 = area), by = \"SA2\") %>% 
+  summarise(comma(sum(2 * (1-30/42.39) * weighted.time/60 * 16.26 * 250 * count, na.rm=T)))
+```"

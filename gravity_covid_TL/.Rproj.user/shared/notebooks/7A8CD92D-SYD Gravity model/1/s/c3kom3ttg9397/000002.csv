@@ -1,0 +1,19 @@
+"0","```r
+dvt <- function(dir = \"To CBD\", md = \"Driving\", df = data1) {
+  df %>% 
+    # filter(direction == dir, mode == md, time != \"00:00\") %>% 
+    filter(direction == dir, time != \"00:00\") %>% 
+    # select(SA2, time, km, minutes_tf, mode) %>%
+    # spread(mode, minutes_tf) %>% 
+    ggplot(aes(x=km, y=minutes_tf, col=mode)) +
+    # ggplot(aes(x=km, y=km/minutes_tf*60, col=mode)) +
+    geom_point(alpha=.3) + 
+    geom_abline(linetype = 2, col = DC[7]) +
+    facet_wrap(~time, ncol=3) +
+    ggc() + 
+    ggx(name=\"Distance \" %>% paste0(dir), limit=c(0,120)) +
+    ggy(name = \"Travel Time \" %>% paste0(dir), limit=c(0,200)) +
+    ggl(c(.035,.97))
+}
+dvt()
+```"

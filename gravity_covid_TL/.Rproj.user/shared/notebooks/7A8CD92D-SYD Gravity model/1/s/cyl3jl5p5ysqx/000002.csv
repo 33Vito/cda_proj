@@ -1,0 +1,35 @@
+"0","```r
+wtp_wtp <- wtp_data %>% 
+  select(Q4r1:Q4r6, wt, ot) %>% 
+  rename(Work = Q4r1, 
+         Shop = Q4r2, 
+         School = Q4r3, 
+         Public_trans = Q4r4, 
+         Family_friend = Q4r5, 
+         Hospital = Q4r6) %>% 
+  bind_rows(wtp_data %>% 
+              select(Q5r1:Q5r6, wt, ot) %>% 
+              rename(
+                Work = Q5r1,
+                Shop = Q5r2,
+                School = Q5r3,
+                Public_trans = Q5r4,
+                Family_friend = Q5r5,
+                Hospital = Q5r6)
+            ) %>%
+  gather(key,value, -wt, -ot) 
+  # filter(value > 0)
+wtp_wtp %>% 
+  ggplot() + 
+  geom_density_ridges(aes(x = value, y = key, fill = key, height = ..density..), 
+                      scale = 1.2, alpha = .2) + 
+  geom_text(data = summarise(group_by(filter(wtp_wtp), key), 
+                             lab = round(weighted.mean(value,wt, na.rm=T),1)), 
+            aes(x=60, y=key, label=paste0(\"Avg: $\", lab)), nudge_y = .5) + 
+  # geom_density_ridges(stat = \"binline\", bins = 20, scale = 0.95, draw_baseline = FALSE) +
+  # facet_wrap(~key2, scales = \"free\") + 
+  ylab(\"\") + 
+  xlab(\"Willingness to pay per trip (including zeros)\") + 
+  ggf() + 
+  ggl(\"none\")
+```"

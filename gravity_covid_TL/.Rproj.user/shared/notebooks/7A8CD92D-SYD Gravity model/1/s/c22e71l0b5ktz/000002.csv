@@ -1,0 +1,41 @@
+"0","```r
+data1_0830 <- data1_toll %>% filter(direction == \"To CBD\", mode == \"Driving\", time == \"08:30\")
+left_join(
+  wvr.ratio(\"Sydney - Haymarket - The Rocks\"),
+  wvr.ratio(\"Parramatta - Rosehill\"),
+  by = \"SA2\", suffix = c(\".cbd\", \".pmt\")) %>% 
+  mutate(id = SYD_dt$id[.match(SA2, SYD_dt$SA2)]) %>% 
+  mutate(dist = data1$km[.match(SA2, data1$SA2)]) %>% 
+  mutate(minutes_tf = data1_0830$minutes_tf[.match(SA2, data1_0830$SA2)]) %>% 
+  mutate(`Distance to CBD` = case_when(dist < 10 ~ \"< 10 km\", 
+                                       dist > 10 & dist < 30 ~ \"10 - 30 km\", 
+                                       dist > 30 ~ \" > 30 km\")) %>% 
+  
+  mutate(`Travel time to CBD` = case_when(minutes_tf < 60 ~ \"< 60 min\", 
+                                          minutes_tf > 60 & minutes_tf < 90 ~ \"60 - 90 min\", 
+                                          minutes_tf > 90 ~ \" > 90 min\")) %>% 
+  
+  mutate(`Distance to CBD` = fct_relevel(`Distance to CBD`, \"< 10 km\", \"10 - 30 km\")) %>% 
+  mutate(`Travel time to CBD` = fct_relevel(`Travel time to CBD`, \"< 60 min\", \"60 - 90 min\")) %>% 
+  filter(!is.na(`Distance to CBD`), !is.na(`Travel time to CBD`)) %>%
+  
+  ggplot(aes(x=ratio.cbd, y=ratio.pmt, col=`Travel time to CBD`)) + 
+  geom_point(alpha = .5) + 
+  geom_text_repel(aes(label = ifelse(SA2 %in% c(\"Sydney - Haymarket - The Rocks\", 
+                                               \"Parramatta - Rosehill\", 
+                                               \"North Sydney - Lavender Bay\", 
+                                               \"Pyrmont - Ultimo\", 
+                                               \"Potts Point - Woolloomooloo\", 
+                                               # \"Macquarie Park - Marsfield\",
+                                               \"North Parramatta\", 
+                                               \"Royal National Park\"), SA2, \"\")), 
+                  size=3, 
+                  box.padding = unit(0.3, \"lines\"),
+                  point.padding = unit(0.3, \"lines\"),
+                  segment.color = 'grey50') + 
+  # geom_abline(linetype = 2) + 
+  ggc(fc = DC[c(2,3,1)]) + 
+  ggx(percent, name = \"% of people working at \nCBD 2011\", pbn = 8) + 
+  ggy(percent, name = \"% of people working at \nParramatta 2011\", pbn = 8) + 
+  ggl(c(.85, .85), lt = T)
+```"

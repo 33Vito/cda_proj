@@ -1,0 +1,99 @@
+"0","```r
+dd_lift_Rydalmere <- work %>% 
+  rename(SA2 = area, value = count) %>% 
+  # work_DAE %>%
+  # select(Region, `2016-17`) %>%
+  # rename(SA2 = Region, value = `2016-17`) %>%
+  gravity(cc = ., dcut = 10, dcoef = 1, md = c(\"Driving\", \"Transit\"), 
+          df_dmx = dmx %>% 
+            mutate(dist = case_when(
+              (from == \"Ermington - Rydalmere\" & #TRUE) |
+                 to %in% c(\"Sydney - Haymarket - The Rocks\",
+                           \"Homebush Bay - Silverwater\",
+                           \"Parramatta - Rosehill\",
+                           \"Macquarie Park - Marsfield\")) |
+                (to == \"Ermington - Rydalmere\" & #TRUE)
+                from %in% c(\"Sydney - Haymarket - The Rocks\",
+                            \"Homebush Bay - Silverwater\",
+                            \"Parramatta - Rosehill\",
+                            \"Macquarie Park - Marsfield\"))
+              ~ dist*32/66.2,
+               TRUE ~ dist))) %>% 
+  left_join(wvr.ratio(\"Sydney - Haymarket - The Rocks\"),
+            by = \"SA2\") %>%
+  
+  left_join(wvr.ratio(\"Parramatta - Rosehill\") %>% select(SA2, ratio) %>% rename(ratio_p = ratio),
+            by = \"SA2\") %>%
+  left_join(wvr.ratio(\"Badgerys Creek\") %>% select(SA2, ratio) %>% rename(ratio_b = ratio),
+            by = \"SA2\") %>%
+  
+  filter(home > 0) %>% 
+  mutate(income = rvi$avg.income[.match(SA2, rvi$area)]) %>% 
+  mutate(age = rva$avg.age[.match(SA2, rva$area)]) %>% 
+  mutate(female = rvg$f.share[.match(SA2, rvg$area)]) %>% 
+  mutate(edu = rve$b.share[.match(SA2, rve$area)]) %>% 
+  mutate(emp = rvl$emp[.match(SA2, rvl$area)]) %>% 
+  mutate(pop = rvg$Total[.match(SA2, rvg$area)]) %>% 
+  mutate(self = wvr.self$ratio[.match(SA2, wvr.self$SA2)]) %>%
+  
+  mutate(tt = data1_0830$minutes_tf[.match(SA2, data1_0830$SA2)]) %>% 
+  mutate(km = data1_0830$km[.match(SA2, data1_0830$SA2)]) %>% 
+  mutate(weighted.time = weighted.wvr$weighted.time[.match(SA2, weighted.wvr$SA2)]) %>% 
+  mutate(`30 min` = weighted.wvr$`30 min`[.match(SA2, weighted.wvr$SA2)]) %>% 
+  
+  # filter(female > .4, female < .6) %>%
+  filter(ratio > 0) %>% 
+  filter(gravity > 0) %>% 
+  
+  add_row(SA2 = \"Ermington - Rydalmere old\", gravity = 6464.09)
+commute_mode %>% 
+  gather(key, value, -SA2) %>% 
+  mutate(pb = str_detect(key, \"Train|Bus|Ferry|Tram|Walk|Bicycle\")) %>% 
+  group_by(SA2, pb) %>% 
+  summarise(value = sum(value)) %>% 
+  spread(pb, value) %>% 
+  mutate(pb_share = `TRUE`/(`TRUE`+`FALSE`)) %>% 
+  na.omit() %>% 
+  
+  ungroup() %>% 
+  add_row(SA2 = \"Ermington - Rydalmere old\", pb_share = 0.0876) %>% 
+  
+  left_join(dd_lift_Rydalmere, by=\"SA2\") %>% 
+  ggplot(aes(x=log(gravity), y=pb_share, #text=SA2, 
+             alpha = str_detect(SA2, \"Ermington - Rydalmere\"), 
+             size = str_detect(SA2, \"Ermington - Rydalmere\"), 
+             col = SA2 %in% c(\"Ermington - Rydalmere\"))) + 
+  geom_point() + 
+  
+  geom_text_repel(aes(label = ifelse(SA2 %in% c(\"Sydney - Haymarket - The Rocks\", 
+                                               \"Parramatta - Rosehill\", 
+                                               \"North Sydney - Lavender Bay\", 
+                                               \"St Leonards - Naremburn\", 
+                                               \"Pyrmont - Ultimo\", 
+                                               \"Wentworth Falls\", 
+                                               \"Hornsby - East\", 
+                                               \"Lake Munmorah - Mannering Park\", 
+                                               \"Hornsby - West\",
+                                               \"Bargo\", 
+                                               \"Homebush Bay - Silverwater\",
+                                               \"Lane Cove - Greenwich\",
+                                               \"Mascot - Eastlakes\",
+                                               \"Ermington - Rydalmere\", 
+                                               \"Ermington - Rydalmere old\"), SA2, \"\")), 
+                  size=3, 
+                  box.padding = unit(0.2, \"lines\"),
+                  point.padding = unit(0.2, \"lines\"),
+                  segment.color = 'grey50') +
+  stat_smooth(method = \"loess\", col=DC[1], alpha = .2, se= F, aes(group=1)) + 
+  
+  annotate(\"rect\", xmin=8.2, xmax=9.2, ymin=0.05, ymax=0.25, fill=DC[7], alpha=.2, size=NA) + 
+  # annotate(\"rect\", xmin=9.7, xmax=10.7, ymin=0.07, ymax=0.4, fill=DC[2], alpha=.1, size=NA) + 
+  annotate(\"rect\", xmin=8.7, xmax=9.7, ymin=0.06, ymax=0.3, fill=DC[2], alpha=.1, size=NA) +
+  
+  scale_alpha_manual(values = c(0.5,1)) + 
+  scale_size_manual(values = c(1,2)) + 
+  ggy(percent, \"% of people commuting by \npublic and active transport\", limits = c(0,.45)) + 
+  ggx(comma, \"Work accessibility index\") + 
+  ggc(DC[c(7,2)]) + 
+  ggl(\"none\")
+```"

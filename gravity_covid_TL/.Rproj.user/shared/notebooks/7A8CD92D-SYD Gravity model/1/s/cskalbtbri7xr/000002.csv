@@ -1,0 +1,18 @@
+"0","```r
+allrank %>% 
+  rename(`Liveability Ranking` = oldrank) %>% 
+  mutate(`Liveability + Accessibility Ranking` = min_rank(total)) %>% 
+  mutate(id = SYD_dt$id[.match(SA2, SYD_dt$SA2)]) %>% 
+  mutate(Change = `Liveability Ranking` - `Liveability + Accessibility Ranking`) %>% 
+  select(SA2, `Liveability Ranking`, `Liveability + Accessibility Ranking`, Change) %>% 
+  top_n(30, -`Liveability + Accessibility Ranking`) %>% 
+  arrange(`Liveability + Accessibility Ranking`) %>% 
+  # pdf
+  formattable::format_table(list(
+    `Liveability Ranking` = formattable::normalize_bar(DC[4], 0.2, na.rm=T),
+    `Liveability + Accessibility Ranking` = formattable::color_tile(DC[2], 0.2, na.rm=T),
+    Change = formattable::formatter(\"span\",
+                     style = x ~ formattable::style(color = ifelse(x > 0, DC[2], DC[3])),
+                     x ~ formattable::icontext(ifelse(x > 0, \"arrow-up\", \"arrow-down\"), x))
+  ), width = 800)
+```"

@@ -1,0 +1,35 @@
+"0","```r
+wtp_trip <- wtp_data %>% 
+  select(Q3r1c1:Q3r6c2, wt) %>% 
+  gather(key, value, -wt) %>% 
+  mutate(key2 = str_sub(key, 6, 6)) %>% 
+  filter(key2 == \"1\") %>% 
+  
+  mutate(key = case_when(str_detect(key, \"r1\") ~ key_var[1], 
+                         str_detect(key, \"r2\") ~ key_var[2], 
+                         str_detect(key, \"r3\") ~ key_var[3], 
+                         str_detect(key, \"r4\") ~ key_var[4], 
+                         str_detect(key, \"r5\") ~ key_var[5], 
+                         str_detect(key, \"r6\") ~ key_var[6])) %>% 
+  mutate(key = fct_rev(fct_inorder(key)))
+wtp_trip_labs <- wtp_trip %>% 
+  group_by(key) %>% 
+  .count(check = value>0, wt = wt) %>% 
+  filter(check == T) %>% 
+  arrange(key)
+wtp_trip %>% 
+  filter(value < 20, value > 0) %>% 
+  ggplot() + 
+  geom_density_ridges(aes(x = value, y = key, fill = key, height = ..density..), 
+                      scale = 1.2, alpha = .2) + 
+  geom_text(data = summarise(group_by(filter(wtp_trip, value < 20, value > 0),key), 
+                             lab = round(weighted.mean(value,wt), 1)), 
+            aes(x=15, y=key, label=paste0(\"Avg: \", lab)), nudge_y = .5) + 
+  # geom_density_ridges(stat = \"binline\", bins = 20, scale = 0.95, draw_baseline = FALSE) +
+  # facet_wrap(~key2, scales = \"free\") + 
+  ylab(\"\") + 
+  scale_y_discrete(labels = function(x) paste0(x, \"\n(\",round(100*wtp_trip_labs$percent), \"% > 0)\")) + 
+  xlab(\"Number of trips per week (excluding zeros)\") + 
+  ggf() + 
+  ggl(\"none\")
+```"

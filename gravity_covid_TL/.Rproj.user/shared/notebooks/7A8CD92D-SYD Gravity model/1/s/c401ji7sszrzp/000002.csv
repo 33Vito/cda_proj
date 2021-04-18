@@ -1,0 +1,21 @@
+"0","```r
+gravity(shops[,-1], dcut = 2.5, md = \"Walking\") %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill= rank <= 20), map = SYD_tidy, col=\"grey50\", size=.1) +
+  # geom_point(data = shops, aes(x=lon, y=lat),
+  #            size=1, col=DC[2], alpha=.3) +
+  # stat_density2d(data = rbind(sschools %>% select(Long, Lat),
+  #                         pschools %>% select(Long, Lat)),
+  #            aes(x=Long, y=Lat, fill=..level.., alpha=..level..),
+  #            binwidth = 1.2,
+  #            geom=\"polygon\") +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  # coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  # scale_fill_gradient(low=\"white\", high=DC[2]) + 
+  # scale_alpha_continuous(range = c(0,.3)) + 
+  ggf(c(\"white\", DC[2])) + 
+  theme_void() +
+  theme(legend.position = \"none\")
+```"

@@ -1,0 +1,45 @@
+"0","```r
+wtp_data %>% 
+  select(Q4r1:Q4r6, wt) %>% 
+  rename(Work = Q4r1, 
+         Shop = Q4r2, 
+         School = Q4r3, 
+         Public_trans = Q4r4, 
+         Family_friend = Q4r5, 
+         Hospital = Q4r6) %>% 
+  bind_rows(wtp_data %>% 
+              select(Q5r1:Q5r6, wt) %>% 
+              rename(
+                Work = Q5r1,
+                Shop = Q5r2,
+                School = Q5r3,
+                Public_trans = Q5r4,
+                Family_friend = Q5r5,
+                Hospital = Q5r6)
+            ) %>%
+  gather(key,value, -wt) %>% 
+  group_by(key) %>% 
+  summarise(WTP = weighted.mean(value, wt, na.rm=T)) %>% 
+  
+  left_join(
+    wtp_data %>%
+      select(Q3r1c1:Q3r6c2,wt) %>%
+      select(1, 3, 5, 7, 9, 11, 13) %>%
+      gather(key, value, -wt) %>%
+      # filter(value > 0) %>%
+      group_by(key) %>%
+      summarise(n.trips = weighted.mean(value, wt, na.rm = T)) %>% 
+      mutate(key = key_var)
+  ,by = \"key\") %>% 
+  mutate(WTP_wk = WTP*n.trips) %>% 
+  # mutate(WTP_pa = WTP_wk*52) %>% 
+  mutate(WTP_pa_pop = comma(52 * WTP_wk * 3755410)) %>% 
+  arrange(-WTP_wk) %>% 
+  
+  add_row(key = \"Total\", 
+          # WTP = \"\",
+          n.trips = sum(.$n.trips), 
+          WTP_wk = sum(.$WTP_wk), 
+          WTP_pa_pop = comma(round(sum(52 * .$WTP_wk * 3755410)))) %>% 
+  pdf(1)
+```"

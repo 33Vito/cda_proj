@@ -1,0 +1,8 @@
+"0","confirmed_cases %>% "
+"0","  count(lhd_2010_name, notification_date) %>% "
+"0","  ggplot(aes(x=notification_date , y=n, col=lhd_2010_name)) + "
+"0","  # geom_point() + "
+"0","  geom_line() + "
+"0","  # facet_wrap(~lhd_2010_name) + "
+"0","  labs(subtitle = ""Daily new confirmed Covid-19 cases (NSW)"") + "
+"0","  ggl(lp = ""right"")"

@@ -1,0 +1,20 @@
+"0","```r
+dd %>% 
+  mutate(pred_gravity = pred_gt$gravity[.match(SA2, pred_gt$SA2)]) %>% 
+  mutate(growth_gravity = pred_gravity/gravity - 1) %>% 
+  ggplot() +  
+  geom_map(inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id, fill=growth_gravity ), col = DC[7], map = SYD_tidy, col=\"grey50\", size=.1) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  # scale_fill_gradient(low=\"white\", high=DC[5], labels = percent) +
+  scale_fill_gradientn(colours = c(\"white\", DC[3], DC[1]),
+                       values = c(0,.2,1),
+                       breaks = pretty_breaks(5),
+                       labels = percent,
+                       na.value = \"white\") +
+  scale_alpha_continuous(range = c(0,.3)) +
+  theme_void() +
+  theme(legend.position = c(.9,.15))
+```"

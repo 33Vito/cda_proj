@@ -1,0 +1,35 @@
+"0","```r
+# SYD_dt %>% 
+bind_rows(
+  shops %>% select(lon, lat) %>% 
+    rename(Long = lon, Lat = lat) %>% mutate(obj = \"Supermarket & groceries\"), 
+  hospitals %>% select(Longitude, Latitude) %>% 
+    rename(Long = Longitude, Lat = Latitude) %>% mutate(obj = \"Hospitals\"), 
+  rbind(sschools %>% select(Long, Lat),
+        pschools %>% select(Long, Lat)) %>% mutate(obj = \"Schools\")
+) %>% 
+  ggplot() +  
+  geom_map(data = SYD_dt, inherit.aes = FALSE, alpha=.85,
+           aes(map_id = id), map = SYD_tidy, col=\"grey50\", size=.1, fill=\"white\") +
+  # geom_point(size = .5, alpha = .1, aes(x=Long, y=Lat,col=obj)) +
+  stat_density2d(aes(x=Long, y=Lat, fill=..level.., alpha=..level.., col=obj), 
+                 binwidth = 1.2,
+                 geom=\"polygon\") + 
+  # geom_point(data = shops, aes(x=lon, y=lat, col=\"Shops\"),
+  #            size=1, alpha=.4) +
+  # geom_point(data = hospitals, aes(x=Longitude, y=Latitude, col=\"Hospitals\"),
+  #            size=1, alpha=.4) +
+  # geom_point(data = rbind(sschools %>% select(Long, Lat),
+  #                         pschools %>% select(Long, Lat)), 
+  #            aes(x=Long, y=Lat, col=\"Schools\"), 
+  #            size=1, alpha=.4) +
+  facet_wrap(~obj) +
+  expand_limits(x = SYD_tidy$long, y = SYD_tidy$lat) +
+  # coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  scale_fill_gradient(low=\"white\", high=DC[7]) + 
+  scale_alpha_continuous(range = c(0,.3)) + 
+  ggc(fc = c(\"red\", DC[3], DC[2])) + 
+  theme_void() +
+  theme(legend.position = \"none\", legend.title = element_blank())
+```"

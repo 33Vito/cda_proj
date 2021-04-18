@@ -1,0 +1,16 @@
+"0","```r
+dd %>% 
+  mutate(now = weighted.time) %>% 
+  mutate(future = 30/42.39*weighted.time) %>% 
+  select(SA2, now, future, pop, emp) %>% 
+  gather(key, value, -SA2, -pop, -emp) %>% 
+  ggplot(aes(x=value, col=key, weight = pop*emp)) + 
+  geom_density() + 
+  # geom_vline(xintercept = 30, linetype = 2) + 
+  xlab(\"Weighted average travel time (min)\") +
+  scale_x_continuous(breaks = seq(0,90,15)) + 
+  ggc(labels = c(paste0(\"Future: avg = \", 30, \" min\"), 
+                 paste0(\"Now: avg = \", 42.4, \" min\"))) + 
+  ggl(c(.8, .9), pf = \"w\") + 
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+```"
