@@ -1,5 +1,0 @@
-"0","```r
-spdtb %>%
-  # filter(mode == \"Driving\", time != \"00:00\") %>% 
-  pdf
-```"

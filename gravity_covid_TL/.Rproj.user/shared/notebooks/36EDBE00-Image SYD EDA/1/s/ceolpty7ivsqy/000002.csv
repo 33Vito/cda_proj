@@ -1,3 +1,0 @@
-"0","```r
-mapview::sync(live_map, work_map, ncol=1)
-```"

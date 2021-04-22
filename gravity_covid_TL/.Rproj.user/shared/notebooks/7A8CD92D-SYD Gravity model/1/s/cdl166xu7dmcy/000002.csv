@@ -1,8 +1,0 @@
-"0","```r
-# wvr.ratio.full <- list()
-# for (i in 1:n_distinct(wvr$area)) {
-#   wvr.ratio.full[[i]] <- wvr.ratio(wvr$area[i])
-# }
-# 
-# wvr.ratio.full <- do.call(bind_rows, wvr.ratio.full)
-```"

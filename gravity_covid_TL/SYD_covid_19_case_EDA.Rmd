@@ -23,7 +23,7 @@ options(scipen=999, expressions=50000,
                           autoWidth = TRUE)) 
 
 knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=4)
-# knitr::opts_knit$set(root.dir = "C:/Users/yanjliu/...", progress=FALSE)
+knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
 
 # Load data
@@ -124,12 +124,15 @@ SYD_LGA <- readRDS("data/SYD_LGA.rds")
 ```
 
 ```{r, fig.width=10, fig.height=7}
-plot_map_TL <- function(df, sdf, key_var, fill_var, title_text) {
+plot_map_TL <- function(df, sdf, key_var, fill_var, title_text, 
+                        show_count=FALSE, label_size=3, 
+                        return_obj="combined") {
   # browser()
   df['id'] <- unique(fortify(sdf)$id)[match(df[[key_var]], 
                                             sdf[[key_var]])] %>% as.character()
   sdf_tidy <- fortify(sdf) %>% 
     left_join(df, by="id")
+  sdf_tidy[[fill_var]] <- replace_na(sdf_tidy[[fill_var]], 0)
   
   gg_map <- ggplot(sdf_tidy) +
     geom_map(inherit.aes = FALSE, alpha=.85,
@@ -144,6 +147,17 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text) {
     theme_void() +
     # theme(legend.position = "right")
     theme(legend.position = c(.93,.15))
+  
+  if (show_count) {
+    sdf_centroids <- getSpPPolygonsLabptSlots(sdf) %>% as.data.frame()
+    sdf_centroids[[key_var]] <- sdf[[key_var]]
+    label_df <- left_join(df, sdf_centroids, by=key_var)
+    gg_map <- gg_map + 
+    geom_text(
+      data = label_df, 
+      aes_string(x="V1", y="V2", label=fill_var), 
+      size=label_size, col="white")
+  }
   
   gg_bar <- df %>% 
     # top_n(20) %>% # There is a bug in top_n()
@@ -160,7 +174,10 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text) {
     ggl() + 
     theme(legend.position = "none")
   
-  gg_map + gg_bar + plot_layout(widths = c(3, 1))
+  switch(return_obj, 
+         "combined" = gg_map + gg_bar + plot_layout(widths = c(3, 1)), 
+         "map" = gg_map, 
+         "bar" = gg_bar)
 }
 
 confirmed_cases %>% 
@@ -169,7 +186,7 @@ confirmed_cases %>%
   rename(LGA_NAME19 = lga_name19) %>% 
   mutate(LGA_NAME19 = fct_reorder(LGA_NAME19, Total_cases)) %>% 
   plot_map_TL(SYD_LGA, "LGA_NAME19", "Total_cases", 
-           "Total Covid-19 cases by LGA (SYD Metro)")
+           "Total Covid-19 cases by LGA (SYD Metro)", show_count = T)
 ```
 
 ## POA
@@ -181,7 +198,8 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
-           "Total Covid-19 cases by POA (SYD Metro)")
+           "Total Covid-19 cases by POA (SYD Metro)", 
+           show_count = T, label_size = 2)
 ```
 
 ```{r, fig.width=10, fig.height=7}
@@ -192,7 +210,8 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
-           "Total Covid-19 cases by POA (SYD Metro), excluding top 3 POA")
+           "Total Covid-19 cases by POA (SYD Metro), excluding top 3 POA", 
+           show_count = T, label_size = 2)
 ```
 
 ## Note
@@ -230,8 +249,53 @@ confirmed_cases %>%
   ggl(lp = "none")
 ```
 
+# Map overtime cumulative
+## By quarter
 
+```{r, fig.width=10, fig.height=10}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  mutate(year_quarter = paste(year(notification_date), "Q",
+                             quarter(notification_date), sep="-")) %>% 
+  count(year_quarter, postcode, name="Total_cases") %>% 
+  group_by(postcode) %>% 
+  mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
+  ungroup() %>% 
+  complete(year_quarter, postcode) %>% 
+  replace_na(list(Accumulated_cases=0)) %>% 
+  group_by(year_quarter) %>% 
+  mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Accumulated_share", 
+           "Total Covid-19 cases by POA (SYD Metro)", 
+           return_obj="map") + 
+  facet_wrap(~year_quarter)
+```
+## By week Mar-May 2020
 
+```{r, fig.width=10, fig.height=10}
+confirmed_cases %>% 
+  filter(year(notification_date) == 2020, 
+         month(notification_date) %in% 3:5) %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  mutate(isoweek = isoweek(notification_date)) %>% 
+  count(isoweek, postcode, name="Total_cases") %>% 
+  group_by(postcode) %>% 
+  mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
+  ungroup() %>% 
+  complete(isoweek, postcode) %>% 
+  replace_na(list(Accumulated_cases=0)) %>% 
+  group_by(isoweek) %>% 
+  mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  ungroup() %>% 
+  filter(!is.na(isoweek)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Accumulated_share", 
+           "Total Covid-19 cases by POA (SYD Metro)", 
+           return_obj="map") + 
+  facet_wrap(~isoweek)
+```
 
 
 

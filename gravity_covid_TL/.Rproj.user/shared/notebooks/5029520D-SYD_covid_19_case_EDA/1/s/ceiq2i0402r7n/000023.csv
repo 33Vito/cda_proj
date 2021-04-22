@@ -1,7 +1,0 @@
-"0","confirmed_cases %>% "
-"0","  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% "
-"0","  count(postcode, name=""Total_cases"") %>% "
-"0","  rename(POA_NAME16 = postcode) %>% "
-"0","  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% "
-"0","  plot_map_TL(SYD_POA, ""POA_NAME16"", ""Total_cases"", "
-"0","           ""Total Covid-19 cases by POA (SYD Metro)"")"
