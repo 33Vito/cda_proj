@@ -34,6 +34,14 @@ pacman::p_load(clipr)
 
 pacman::p_load(patchwork)
 
+## For windows to use cairo in plotting
+trace(grDevices::png, quote({
+  if (missing(type) && missing(antialias)) {
+    type <- "cairo-png"
+    antialias <- "subpixel"
+  }
+}), print = FALSE)
+
 datatable <- function(...) DT::datatable(style = "default", 
                                          filter = 'top',
                                          extensions = "Buttons", 

@@ -1,7 +1,7 @@
 ---
 title: "SYD Covid-19 cases EDA"
 author: "Tony Liu"
-date: '`r Sys.Date()`'
+date: "`r Sys.Date()`"
 output:
   html_notebook:
     code_folding: hide
@@ -10,6 +10,8 @@ output:
     toc: yes
     toc_float:
       collapsed: no
+  pdf_document:
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -121,6 +123,7 @@ confirmed_cases %>%
 ```{r}
 SYD_POA <- readRDS("data/SYD_POA.rds")
 SYD_LGA <- readRDS("data/SYD_LGA.rds")
+SYD_SA2 <- readRDS("data/SYD_SA2.rds")
 ```
 
 ```{r, fig.width=10, fig.height=7}
@@ -258,15 +261,14 @@ confirmed_cases %>%
   mutate(year_quarter = paste(year(notification_date), "Q",
                              quarter(notification_date), sep="-")) %>% 
   count(year_quarter, postcode, name="Total_cases") %>% 
+  complete(year_quarter, postcode, fill = list(Total_cases=0)) %>% 
   group_by(postcode) %>% 
   mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
-  ungroup() %>% 
-  complete(year_quarter, postcode) %>% 
-  replace_na(list(Accumulated_cases=0)) %>% 
   group_by(year_quarter) %>% 
   mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
   rename(POA_NAME16 = postcode) %>% 
-  plot_map_TL(SYD_POA, "POA_NAME16", "Accumulated_share", 
+  plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
+              "POA_NAME16", "Accumulated_share", 
            "Total Covid-19 cases by POA (SYD Metro)", 
            return_obj="map") + 
   facet_wrap(~year_quarter)
@@ -275,28 +277,78 @@ confirmed_cases %>%
 
 ```{r, fig.width=10, fig.height=10}
 confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
   filter(year(notification_date) == 2020, 
-         month(notification_date) %in% 3:5) %>% 
+         # month(notification_date) %in% 3:5, 
+         isoweek(notification_date) %in% 10:23) %>% 
   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
   mutate(isoweek = isoweek(notification_date)) %>% 
   count(isoweek, postcode, name="Total_cases") %>% 
+  complete(isoweek, postcode, fill = list(Total_cases=0)) %>% 
   group_by(postcode) %>% 
   mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
-  ungroup() %>% 
-  complete(isoweek, postcode) %>% 
-  replace_na(list(Accumulated_cases=0)) %>% 
   group_by(isoweek) %>% 
   mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   ungroup() %>% 
   filter(!is.na(isoweek)) %>% 
-  plot_map_TL(SYD_POA, "POA_NAME16", "Accumulated_share", 
-           "Total Covid-19 cases by POA (SYD Metro)", 
-           return_obj="map") + 
+  plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
+              "POA_NAME16", "Accumulated_share", 
+              "Total Covid-19 cases by POA (SYD Metro)", 
+              return_obj="map") + 
   facet_wrap(~isoweek)
 ```
 
+# Distribution of share overtime
+
+```{r, fig.width=8, fig.height=3}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  mutate(year_quarter = paste(year(notification_date), "Q",
+                             quarter(notification_date), sep="-")) %>% 
+  count(year_quarter, postcode, name="Total_cases") %>% 
+  complete(year_quarter, postcode, fill = list(Total_cases=0)) %>% 
+  group_by(postcode) %>% 
+  mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
+  ungroup() %>% 
+  complete(year_quarter, postcode) %>% 
+  replace_na(list(Accumulated_cases=0)) %>% 
+  group_by(year_quarter) %>% 
+  mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  
+  ggplot(aes(x=year_quarter, y=Accumulated_cases, 
+             fill=year_quarter,
+             group=as.factor(POA_NAME16))) + 
+  geom_col(col="white", size=.1) + 
+  ggl("none")
+```
+
+
+```{r, fig.width=8, fig.height=2.5}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  mutate(year_quarter = paste(year(notification_date), "Q",
+                             quarter(notification_date), sep="-")) %>% 
+  count(year_quarter, postcode, name="Total_cases") %>% 
+  group_by(postcode) %>% 
+  mutate(Accumulated_cases = cumsum(Total_cases)) %>% 
+  ungroup() %>% 
+  complete(year_quarter, postcode) %>% 
+  replace_na(list(Accumulated_cases=0)) %>% 
+  group_by(year_quarter) %>% 
+  mutate(Accumulated_share = (Accumulated_cases/sum(Accumulated_cases, na.rm=T))) %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  
+  ggplot(aes(x=Accumulated_share, fill=as.factor(year_quarter))) + 
+  # geom_density() + 
+  geom_histogram() + 
+  facet_wrap(~year_quarter, nrow = 1) + 
+  xlim(0,.03) + 
+  ylim(0,40) +
+  ggl("none")
+```
 
 
 
