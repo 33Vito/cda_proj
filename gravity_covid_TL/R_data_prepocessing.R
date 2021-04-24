@@ -23,8 +23,12 @@ SYD_sschools <- readxl::read_excel("./data/SYD_geocodes/Secondary Schools/Second
   filter(!duplicated(poiname)) %>% 
   filter(Long >= 150, Long <= 152)
 
-SYD_shops <- read_csv("./data/SYD_geocodes/Shopping centres/Supermarket & grocery stores.csv") %>% 
+SYD_supermarkets <- read_csv("./data/SYD_geocodes/Shopping centres/Supermarket & grocery stores.csv") %>% 
   filter(!duplicated(address)) %>% 
+  filter(lon >= 150, lon <= 152) %>% 
+  na.omit()
+
+SYD_shops <- read_csv("./data/SYD_geocodes/Shopping centres/Shopping centres.csv") %>% 
   filter(lon >= 150, lon <= 152) %>% 
   na.omit()
 

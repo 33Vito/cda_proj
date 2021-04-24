@@ -457,20 +457,22 @@ confirmed_cases %>%
             aes(x=lon, y=lat, col="Metro"),
              size=.5) +
   ggc(c("darkblue", "red", "darkgreen", "orange")) + 
-  guides(col=guide_legend(title="Mode")) + 
+  guides(col=guide_legend(title="")) + 
   expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
   coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
   theme_void() +
-  theme(legend.position = c(.9,.25))
+  theme(legend.position = c(.9,.35))
 ```
 
 
 ## Hospitals, Schools, Supermarket
 
-```{r, fig.width=9.5, fig.height=3}
+```{r, fig.width=9.5, fig.height=8}
 bind_rows(
   SYD_shops %>% select(lon, lat) %>% 
-    rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarket & groceries"), 
+    rename(Long = lon, Lat = lat) %>% mutate(obj = "Shopping centres"), 
+  SYD_supermarkets %>% select(lon, lat) %>% 
+    rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarkets"), 
   SYD_hospitals %>% select(Longitude, Latitude) %>% 
     rename(Long = Longitude, Lat = Latitude) %>% mutate(obj = "Hospitals"), 
   rbind(SYD_sschools %>% select(Long, Lat),
@@ -480,15 +482,16 @@ bind_rows(
   geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
            aes(map_id = id), map = tidy(SYD_POA), 
            col="grey50", size=.2, fill="white") +
+  geom_jitter(aes(x=Long, y=Lat, col=obj), size=.5, alpha=.5) + 
   stat_density2d(aes(x=Long, y=Lat, 
-                     fill=..level.., alpha=..level.., col=obj), 
+                     fill=..level.., alpha=..level.., col=obj),
                  binwidth = 1.2, geom="polygon", size=.23) + 
   facet_wrap(~obj) +
   expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "darkgreen")) + 
+  ggc(fc = c("darkred", "darkblue", "darkorange", "darkgreen")) + 
   theme_void() +
   theme(legend.position = "none", 
         legend.title = element_blank(), 
@@ -510,7 +513,9 @@ confirmed_cases %>%
   #          col="grey50", size=.3, fill="white") +
   geom_jitter(data = bind_rows(
     SYD_shops %>% select(lon, lat) %>% 
-      rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarket & groceries"), 
+      rename(Long = lon, Lat = lat) %>% mutate(obj = "Shopping centres"), 
+    SYD_supermarkets %>% select(lon, lat) %>% 
+      rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarkets"), 
     SYD_hospitals %>% select(Longitude, Latitude) %>% 
       rename(Long = Longitude, Lat = Latitude) %>% mutate(obj = "Hospitals"), 
     rbind(SYD_sschools %>% select(Long, Lat),
@@ -521,14 +526,66 @@ confirmed_cases %>%
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   # scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "darkgreen")) + 
-  guides(color = guide_legend(override.aes = list(size=3))) + 
+  ggc(fc = c("darkred", "darkblue", "darkorange", "darkgreen")) + 
+  guides(color = guide_legend(override.aes = list(size=3), 
+                              title="POI")) + 
   theme_void() +
   theme(legend.position = c(.9,.25), 
         # legend.title = element_blank(), 
         strip.text = element_text(size=15))
 ```
+## POI combined
 
+```{r, fig.width=9.5, fig.height=7}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  count(postcode, name="Total_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+              "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
+              show_count = T, label_size = 2, return_obj = "map") +
+  geom_line(data = SYD_trains, 
+            aes(x=lon, y=lat, col="Train",
+                group = `Railway line(s)`),
+            size=.5) +
+  geom_line(data = SYD_ferries, 
+            aes(x=lon, y=lat, col="Ferry"),
+             size=.5) +
+  geom_line(data = SYD_lightrails, 
+            aes(x=lon, y=lat, col="Lightrail"),
+             size=.5) +
+  geom_line(data = SYD_metro, 
+            aes(x=lon, y=lat, col="Metro"),
+             size=.5) +
+  
+  # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
+  #          aes(map_id = id), map = tidy(SYD_POA), 
+  #          col="grey50", size=.3, fill="white") +
+  geom_jitter(data = bind_rows(
+    SYD_shops %>% select(lon, lat) %>% 
+      rename(Long = lon, Lat = lat) %>% mutate(obj = "Shopping centres"), 
+    SYD_supermarkets %>% select(lon, lat) %>% 
+      rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarkets"), 
+    SYD_hospitals %>% select(Longitude, Latitude) %>% 
+      rename(Long = Longitude, Lat = Latitude) %>% mutate(obj = "Hospitals"), 
+    rbind(SYD_sschools %>% select(Long, Lat),
+          SYD_pschools %>% select(Long, Lat)) %>% mutate(obj = "Schools")
+  ), 
+  size = 1, alpha = .1, aes(x=Long, y=Lat,col=obj)) +
+  expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
+  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
+  # scale_fill_gradient(low="white", high=DC[7]) + 
+  scale_alpha_continuous(range = c(0,.3)) + 
+  ggc(fc = c("darkred", "darkblue", "darkorange", "darkgreen", 
+             "darkblue", "red", "darkgreen", "orange")) + 
+  guides(color = guide_legend(override.aes = list(size=3), 
+                              title="POI")) + 
+  theme_void() +
+  theme(legend.position = c(.9,.4), 
+        # legend.title = element_blank(), 
+        strip.text = element_text(size=15))
+```
 
 
 
