@@ -17,6 +17,7 @@ output:
 ```{r setup, include=FALSE}
 # source("utility.R")
 source("R_functions.R")
+source("R_data_prepocessing.R")
 
 options(scipen=999, expressions=50000, 
         DT.options = list(pageLength = 8,
@@ -35,6 +36,12 @@ knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
 glimpse(confirmed_cases)
 ```
+```{r}
+SYD_POA <- readRDS("data/SYD_POA.rds")
+SYD_LGA <- readRDS("data/SYD_LGA.rds")
+SYD_SA2 <- readRDS("data/SYD_SA2.rds")
+```
+
 # Time series
 ## Daily
 
@@ -121,12 +128,6 @@ confirmed_cases %>%
 
 ## LGA
 
-```{r}
-SYD_POA <- readRDS("data/SYD_POA.rds")
-SYD_LGA <- readRDS("data/SYD_LGA.rds")
-SYD_SA2 <- readRDS("data/SYD_SA2.rds")
-```
-
 ```{r, fig.width=10, fig.height=7}
 confirmed_cases %>% 
   filter(lga_name19 %in% SYD_LGA$LGA_NAME19) %>% 
@@ -202,6 +203,7 @@ confirmed_cases %>%
                             "\nAccumulated: ", 
                             comma(sum(Accumulated_cases)))) %>% 
   rename(POA_NAME16 = postcode) %>% 
+  
   plot_map_TL(rmapshaper::ms_simplify(
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
@@ -230,6 +232,7 @@ confirmed_cases %>%
                             "\nAccumulated: ", 
                             comma(sum(Accumulated_cases)))) %>% 
   rename(POA_NAME16 = postcode) %>% 
+  
   plot_map_TL(rmapshaper::ms_simplify(
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
@@ -265,6 +268,7 @@ confirmed_cases %>%
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   ungroup() %>% 
   filter(!is.na(isoweek)) %>% 
+  
   plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
               "POA_NAME16", "Accumulated_cases", 
               "Total Covid-19 cases by POA (SYD Metro)", 
@@ -295,6 +299,7 @@ confirmed_cases %>%
                             comma(sum(Accumulated_cases)))) %>% 
   ungroup() %>% 
   filter(!is.na(isoweek)) %>% 
+  
   plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
               "POA_NAME16", "Accumulated_share", 
               "Total Covid-19 cases by POA (SYD Metro)", 
@@ -438,16 +443,25 @@ confirmed_cases %>%
   # geom_map(inherit.aes = FALSE, alpha=.85,
   #          aes(map_id = id), map = tidy(SYD_POA), 
   #          col="grey50", size=.3, fill="white") +
-  geom_line(data = SYD_trains, aes(x=lon, y=lat, group = `Railway line(s)`),
-             size=.5, col="darkorange") +
-  geom_line(data = SYD_ferries, aes(x=lon, y=lat),
-             size=.5, col=DC[3]) +
-  geom_line(data = SYD_lightrails, aes(x=lon, y=lat),
-             size=.5, col="red") +
+  geom_line(data = SYD_trains, 
+            aes(x=lon, y=lat, col="Train",
+                group = `Railway line(s)`),
+            size=.5) +
+  geom_line(data = SYD_ferries, 
+            aes(x=lon, y=lat, col="Ferry"),
+             size=.5) +
+  geom_line(data = SYD_lightrails, 
+            aes(x=lon, y=lat, col="Lightrail"),
+             size=.5) +
+  geom_line(data = SYD_metro, 
+            aes(x=lon, y=lat, col="Metro"),
+             size=.5) +
+  ggc(c("darkblue", "red", "darkgreen", "orange")) + 
+  guides(col=guide_legend(title="Mode")) + 
   expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
   coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
   theme_void() +
-  theme(legend.position = c(.9,.15))
+  theme(legend.position = c(.9,.25))
 ```
 
 
@@ -494,7 +508,7 @@ confirmed_cases %>%
   # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
   #          aes(map_id = id), map = tidy(SYD_POA), 
   #          col="grey50", size=.3, fill="white") +
-  geom_point(data = bind_rows(
+  geom_jitter(data = bind_rows(
     SYD_shops %>% select(lon, lat) %>% 
       rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarket & groceries"), 
     SYD_hospitals %>% select(Longitude, Latitude) %>% 
@@ -515,41 +529,6 @@ confirmed_cases %>%
         strip.text = element_text(size=15))
 ```
 
-```{r, fig.width=9.5, fig.height=7}
-confirmed_cases %>% 
-  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
-  count(postcode, name="Total_cases") %>% 
-  rename(POA_NAME16 = postcode) %>% 
-  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
-  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
-              "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
-              show_count = T, label_size = 2, return_obj = "map") +
-  
-  # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
-  #          aes(map_id = id), map = tidy(SYD_POA), 
-  #          col="grey50", size=.3, fill="white") +
-  stat_density2d(data = bind_rows(
-    SYD_shops %>% select(lon, lat) %>% 
-      rename(Long = lon, Lat = lat) %>% mutate(obj = "Supermarket & groceries"), 
-    SYD_hospitals %>% select(Longitude, Latitude) %>% 
-      rename(Long = Longitude, Lat = Latitude) %>% mutate(obj = "Hospitals"), 
-    rbind(SYD_sschools %>% select(Long, Lat),
-          SYD_pschools %>% select(Long, Lat)) %>% mutate(obj = "Schools")
-  ), 
-  aes(x=Long, y=Lat, 
-      fill=..level.., alpha=..level.., col=obj), 
-  binwidth = 1.2, geom="polygon", size=.1) + 
-  expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
-  xlim(150.7,151.48) + ylim(-34.1,-33.5) +
-  # scale_fill_gradient(low="white", high=DC[7]) + 
-  scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "darkgreen")) + 
-  guides(color = guide_legend(override.aes = list(size=3))) + 
-  theme_void() +
-  theme(legend.position = c(.9,.35), 
-        # legend.title = element_blank(), 
-        strip.text = element_text(size=15))
-```
 
 
 

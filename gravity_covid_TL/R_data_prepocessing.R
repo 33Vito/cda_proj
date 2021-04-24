@@ -36,3 +36,6 @@ SYD_ferries <- read_csv("./data/SYD_geocodes/Trains/Ferries.csv") %>%
 
 SYD_lightrails <- read_csv("./data/SYD_geocodes/Trains/LightRails.csv") %>% 
   filter(lon >= 150, lon <= 152)
+
+SYD_metro <- read_csv("./data/SYD_geocodes/Trains/Metro.csv") %>% 
+  filter(lon >= 150, lon <= 152)

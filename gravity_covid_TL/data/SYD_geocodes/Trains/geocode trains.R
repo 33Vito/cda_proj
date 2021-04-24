@@ -21,9 +21,14 @@ write.csv(cbind(station, loc), "Trains.csv", row.names = F)
 
 
 
+# metro ------------------------------
+metro_df <- read_csv("data/SYD_geocodes/Trains/Metro.csv")
 
+register_google(key = "AIzaSyALvIJNI54O02X5MxjtTHefEu8kyne7Wg8", write = TRUE)
+metro_geocodes <- geocode(paste0(metro_df$Name," Metro Station Sydney"))
 
-
+write.csv(cbind(metro_df, metro_geocodes), 
+          "data/SYD_geocodes/Trains/Metro.csv", row.names = F)
 
 
 
