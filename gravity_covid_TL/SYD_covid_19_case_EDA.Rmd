@@ -30,17 +30,60 @@ knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
 
-# Load data
+# Headlines
 
-```{r}
-confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
-glimpse(confirmed_cases)
+```{r, fig.width=10, fig.height=25}
+AU_timeline %>% 
+  # filter(date >= ymd(20200220)) %>% 
+  arrange(date) %>% 
+  add_row(date = ymd(20200120), event="") %>%
+  # add_row(date = ymd(20200220), event="") %>%
+  add_row(date = ymd(20200331), event="") %>%
+  add_row(date = ymd(20200401), event="") %>%
+  add_row(date = ymd(20200630), event="") %>%
+  add_row(date = ymd(20200701), event="") %>%
+  add_row(date = ymd(20200930), event="") %>%
+  add_row(date = ymd(20201001), event="") %>%
+  # filter(nchar(event) < 230) %>% 
+  # filter(region != "VIC") %>% 
+  mutate(rowid = as.numeric(rownames(.))) %>% 
+  mutate(date_gap = as.numeric(date-lag(date))) %>% 
+  mutate(nchar = nchar(event), 
+         nchar_scaled = (nchar-min(nchar))/(max(nchar)-min(nchar)), 
+         point_position = 800 * nchar_scaled * (-1)^rowid,
+         # point_position = c(100)*(-1)^rowid
+         ) %>% 
+  mutate(facet_var = quarter(date, with_year = T)) %>% 
+  
+  ggplot(aes(x=date, y=0)) + 
+  geom_line() + 
+  geom_point(aes(col=region)) +
+  geom_segment(aes(x=date, xend=date, col=region,
+                   y=0, yend=point_position)) +
+  geom_point(aes(y=point_position, col=region), shape=1) +
+  geom_text(aes(y=-10, 
+                label=paste0(day(date), " ", 
+                             month(date, label=T))), 
+            angle=30, 
+            vjust=1, hjust=1) + 
+  geom_label(aes(label=str_wrap(paste0(date, ": ", event), nchar/2), alpha=.7,
+                 # directions="y", min.segment.length = Inf,
+                 x=date, y=point_position, col=region, vjust="outward")) +
+  scale_x_date(date_breaks = "1 month", 
+               date_labels = "%b %Y") + 
+  facet_wrap(~facet_var, strip.position="top",
+             ncol = 1, scales = "free_x") +
+  # coord_flip() +
+  ylim(-1200,1200) + 
+  coord_cartesian(clip = "off") + 
+  theme_void(base_size = 23) +
+  theme(legend.position = "none", 
+        # rect = element_rect(fill = "transparent"),
+        plot.margin = unit(c(0, 2.3, 0, 2.3),"cm"),
+        # plot.background = element_rect(fill = NULL)
+        )
 ```
-```{r}
-SYD_POA <- readRDS("data/SYD_POA.rds")
-SYD_LGA <- readRDS("data/SYD_LGA.rds")
-SYD_SA2 <- readRDS("data/SYD_SA2.rds")
-```
+
 
 # Time series
 ## Daily
@@ -482,7 +525,7 @@ bind_rows(
   geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
            aes(map_id = id), map = tidy(SYD_POA), 
            col="grey50", size=.2, fill="white") +
-  geom_jitter(aes(x=Long, y=Lat, col=obj), size=.5, alpha=.5) + 
+  geom_jitter(aes(x=Long, y=Lat, col=obj), size=.8, alpha=.5) + 
   stat_density2d(aes(x=Long, y=Lat, 
                      fill=..level.., alpha=..level.., col=obj),
                  binwidth = 1.2, geom="polygon", size=.23) + 
@@ -491,7 +534,7 @@ bind_rows(
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "darkorange", "darkgreen")) + 
+  ggc(fc = c("darkred", "darkblue", "black", "darkgreen")) + 
   theme_void() +
   theme(legend.position = "none", 
         legend.title = element_blank(), 
