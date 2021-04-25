@@ -37,7 +37,7 @@ AU_POA <- readOGR(
   dsn= "data/1270055003_poa_2016_aust_shape" , 
   layer="POA_2016_AUST",
   verbose=FALSE)
-saveRDS(AU_SA2, file = "data/AU_POA.rds")
+saveRDS(AU_POA, file = "data/AU_POA.rds")
 
 # SYD_postcode_range <- read_csv("data/SYD_postcode_range.csv")
 # SYD_postcode_range_metro <- SYD_postcode_range %>%
@@ -59,7 +59,10 @@ saveRDS(AU_SA2, file = "data/AU_POA.rds")
 #                           SYD_postcode_range_metro$max_postcode, 
 #                           ~seq(.x, .y, 1)) %>% reduce(c)
 
-list_SYD_postcode <- c(seq(1000,2249,1), seq(2760, 2770))
+list_SYD_postcode <- c(seq(1000,2249,1), seq(2760, 2770), 
+                       2747:2750,2759
+                       # 2570, 2567, 2557, 2558, 2566
+                       )
 
 SYD_POA <- AU_POA[AU_POA$POA_CODE16 %in% as.character(list_SYD_postcode),]
 # plot(SYD_POA, main = "Sydney Metro POA")

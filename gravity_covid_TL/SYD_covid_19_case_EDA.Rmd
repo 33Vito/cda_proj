@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
 
-# Headlines {.tabset}
+# News headline 
 ## 1st half 2020
 
 ```{r, fig.width=10, fig.height=12}
@@ -186,22 +186,31 @@ AU_timeline %>%
 
 ```{r, fig.width=8, fig.height=4}
 confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
   count(notification_date) %>% 
   ggplot(aes(x=notification_date , y=n)) + 
   # geom_point() + 
   geom_line() + 
-  labs(subtitle = "Daily new confirmed Covid-19 cases (NSW)") + 
+  ylab("Count of cases") + 
+  labs(subtitle = "Daily new confirmed Covid-19 cases (SYD metro)") + 
+  annotate("text", x=ymd(20200505), y=110, size=3.3, col="darkred", 
+           label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney)") + 
+  annotate("text", x=ymd(20200815), y=30, size=3.3, col="darkred", 
+           label="2nd outbreak \n (Liverpool, Western Sydney)") + 
+  annotate("text", x=ymd(20210101), y=40, size=3.3, col="darkred", 
+           label="3rd outbreak \n (Avalon beach, Northern Sydney)") + 
   ggl()
 ```
 
 ```{r, fig.width=8, fig.height=5}
 confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
   count(lhd_2010_name, notification_date) %>% 
   ggplot(aes(x=notification_date , y=n, col=lhd_2010_name)) + 
   # geom_point() + 
   geom_line() + 
   # facet_wrap(~lhd_2010_name) + 
-  labs(subtitle = "Daily new confirmed Covid-19 cases (NSW)") + 
+  labs(subtitle = "Daily new confirmed Covid-19 cases (SYD)") + 
   ggl(lp = "right")
 ```
 
@@ -209,7 +218,10 @@ confirmed_cases %>%
 
 ```{r, fig.width=8, fig.height=5}
 confirmed_cases %>% 
-  mutate(lhd_2010_name = ifelse(is.na(lhd_2010_name), "Unknown", lhd_2010_name)) %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Sydney (CBD)", 
+                                lhd_2010_name)) %>% 
+  # mutate(lhd_2010_name = ifelse(is.na(lhd_2010_name), "Unknown", lhd_2010_name)) %>%
   count(lhd_2010_name, notification_date) %>% 
   group_by(lhd_2010_name) %>% 
   mutate(days_since_first_case = notification_date - min(notification_date)) %>% 
@@ -220,20 +232,23 @@ confirmed_cases %>%
   ggplot(aes(x=days_since_first_case , y=accumulated_cases, col=lhd_2010_name)) + 
   # geom_point() + 
   geom_line() + 
-  geom_text_repel(aes(label=lab), size=3.3, hjust=-.1, min.segment.length = 10) + 
+  geom_text_repel(aes(label=lab), size=4, hjust=-.1, min.segment.length = 10) + 
   # facet_wrap(~lhd_2010_name) + 
-  labs(subtitle = "Accumulated confirmed Covid-19 cases (NSW), by region") + 
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by region") + 
   xlim(c(0,550)) +
-  ggl(lp = "none")
+  ggl(lp = "none") 
 ```
 
 ```{r, fig.width=9, fig.height=6}
 confirmed_cases %>% 
-  filter(lhd_2010_name %in% c("South Eastern Sydney", 
-                           "Northern Sydney", 
-                           "Western Sydney", 
-                           "South Western Sydney", 
-                           "Sydney") | is.na(lhd_2010_name)) %>% 
+  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Sydney (CBD)", 
+                                lhd_2010_name)) %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  # filter(lhd_2010_name %in% c("South Eastern Sydney", 
+  #                          "Northern Sydney", 
+  #                          "Western Sydney", 
+  #                          "South Western Sydney", 
+  #                          "Sydney") | is.na(lhd_2010_name)) %>% 
   count(lhd_2010_name, postcode, notification_date) %>% 
   group_by(lhd_2010_name, postcode) %>% 
   mutate(days_since_first_case = notification_date - min(notification_date)) %>% 
@@ -245,8 +260,8 @@ confirmed_cases %>%
              col=lhd_2010_name)) + 
   # geom_point() + 
   geom_line() + 
-  geom_text(aes(label=lab), size=3) + 
-  facet_wrap(~lhd_2010_name, scales = "free_y") +
+  geom_text(aes(label=lab), size=3, hjust="outward") + 
+  facet_wrap(~lhd_2010_name) +
   labs(subtitle = "Accumulated confirmed Covid-19 cases (Sydney), by postcode") + 
   xlim(c(0,550)) +
   ggl(lp = "none", )
@@ -585,17 +600,17 @@ confirmed_cases %>%
   geom_line(data = SYD_trains, 
             aes(x=lon, y=lat, col="Train",
                 group = `Railway line(s)`),
-            size=.5) +
+            size=.8) +
   geom_line(data = SYD_ferries, 
             aes(x=lon, y=lat, col="Ferry"),
-             size=.5) +
+             size=.8) +
   geom_line(data = SYD_lightrails, 
             aes(x=lon, y=lat, col="Lightrail"),
-             size=.5) +
+             size=.8) +
   geom_line(data = SYD_metro, 
             aes(x=lon, y=lat, col="Metro"),
-             size=.5) +
-  ggc(c("darkblue", "red", "darkgreen", "orange")) + 
+             size=.8) +
+  ggc(c("deepskyblue", "red", "darkgreen", "orange")) + 
   guides(col=guide_legend(title="")) + 
   expand_limits(x = tidy(SYD_POA)$long, y = tidy(SYD_POA)$lat) +
   coord_cartesian(xlim = c(150.7, 151.48), ylim = c(-34.1, -33.5)) +
@@ -630,7 +645,7 @@ bind_rows(
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "black", "darkgreen")) + 
+  ggc(fc = c("darkred", "deepskyblue", "black", "darkgreen")) + 
   theme_void() +
   theme(legend.position = "none", 
         legend.title = element_blank(), 
@@ -687,16 +702,16 @@ confirmed_cases %>%
   geom_line(data = SYD_trains, 
             aes(x=lon, y=lat, col="Train",
                 group = `Railway line(s)`),
-            size=.5) +
+            size=.8) +
   geom_line(data = SYD_ferries, 
             aes(x=lon, y=lat, col="Ferry"),
-             size=.5) +
+             size=.8) +
   geom_line(data = SYD_lightrails, 
             aes(x=lon, y=lat, col="Lightrail"),
-             size=.5) +
+             size=.8) +
   geom_line(data = SYD_metro, 
             aes(x=lon, y=lat, col="Metro"),
-             size=.5) +
+             size=.8) +
   
   # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
   #          aes(map_id = id), map = tidy(SYD_POA), 
