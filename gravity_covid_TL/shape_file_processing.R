@@ -7,6 +7,7 @@ AU_SA2 <- readOGR(
   dsn= "data/1270055001_sa2_2016_aust_shape" , 
   layer="SA2_2016_AUST",
   verbose=FALSE)
+AU_SA2@proj4string <- CRS("+proj=longlat +ellps=GRS80 +no_defs")
 saveRDS(AU_SA2, file = "data/AU_SA2.rds")
 
 SYD_SA2 <- AU_SA2[AU_SA2$GCC_CODE16 == "1GSYD",]
@@ -37,6 +38,7 @@ AU_POA <- readOGR(
   dsn= "data/1270055003_poa_2016_aust_shape" , 
   layer="POA_2016_AUST",
   verbose=FALSE)
+AU_POA@proj4string <- CRS("+proj=longlat +ellps=GRS80 +no_defs")
 saveRDS(AU_POA, file = "data/AU_POA.rds")
 
 # SYD_postcode_range <- read_csv("data/SYD_postcode_range.csv")
@@ -74,6 +76,7 @@ AU_LGA <- readOGR(
   dsn= "data/1270055003_lga_2019_aust_shp" , 
   layer="LGA_2019_AUST",
   verbose=FALSE)
+AU_LGA@proj4string <- CRS("+proj=longlat +ellps=GRS80 +no_defs")
 saveRDS(AU_SA2, file = "data/AU_LGA.rds")
 
 # NSW_LGA <- AU_LGA[AU_LGA$STE_NAME16 == "New South Wales",]
