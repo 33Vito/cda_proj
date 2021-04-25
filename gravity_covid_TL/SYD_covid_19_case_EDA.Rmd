@@ -30,7 +30,104 @@ knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
 
-# Headlines
+# Headlines {.tabset}
+## 1st half 2020
+
+```{r, fig.width=10, fig.height=12}
+AU_timeline %>% 
+  filter(date <= ymd(20200515)) %>%
+  arrange(date) %>% 
+  # filter(nchar(event) < 230) %>% 
+  # filter(region != "VIC") %>% 
+  mutate(rowid = as.numeric(rownames(.))) %>% 
+  mutate(date_gap = as.numeric(date-lag(date))) %>% 
+  mutate(nchar = nchar(event), 
+         nchar_scaled = (nchar-min(nchar))/(max(nchar)-min(nchar)), 
+         # point_position = 700 * nchar_scaled * (-1)^rowid,
+         point_position = c(100,100,280,320,550,20,100,550,720,150,
+                            240,880,400,300)*(-1)^rowid
+         ) %>% 
+  mutate(facet_var = quarter(date, with_year = T)) %>% 
+  
+  ggplot(aes(x=date, y=0)) + 
+  geom_line() + 
+  geom_point(aes(col=region)) +
+  geom_segment(aes(x=date, xend=date, col=region,
+                   y=0, yend=point_position)) +
+  geom_point(aes(y=point_position, col=region), shape=1) +
+  geom_text(aes(y=-10, 
+                label=paste0(day(date), " ", 
+                             month(date, label=T))), 
+            angle=30, 
+            vjust=1, hjust=1) + 
+  geom_label(aes(label=str_wrap(paste0(date, ": ", event), nchar/1.8), alpha=.7,
+                 # directions="y", min.segment.length = Inf,
+                 x=date, y=point_position, col=region, vjust="outward")) +
+  scale_x_date(date_breaks = "1 month", 
+               date_labels = "%b %Y") + 
+  # facet_wrap(~facet_var, strip.position="top",
+  #            ncol = 1, scales = "free_x") +
+  # coord_flip() +
+  ylim(-1200,1200) + 
+  coord_cartesian(clip = "off") + 
+  labs(subtitle = "AU/NSW Covid-19 timeline, 1st half 2020") +
+  theme_void(base_size = 23) +
+  theme(legend.position = "none", 
+        # rect = element_rect(fill = "transparent"),
+        plot.margin = unit(c(0, 2.3, 0, 2.3),"cm"),
+        # plot.background = element_rect(fill = NULL)
+        )
+```
+
+## 2nd half 2020
+
+```{r, fig.width=10, fig.height=12}
+AU_timeline %>% 
+  filter(date > ymd(20200515)) %>%
+  arrange(date) %>% 
+  # filter(nchar(event) < 230) %>% 
+  # filter(region != "VIC") %>% 
+  mutate(rowid = as.numeric(rownames(.))) %>% 
+  mutate(date_gap = as.numeric(date-lag(date))) %>% 
+  mutate(nchar = nchar(event), 
+         nchar_scaled = (nchar-min(nchar))/(max(nchar)-min(nchar)), 
+         # point_position = 700 * nchar_scaled * (-1)^rowid,
+         point_position = c(50,100,280,420,550,720,100,550,720,150,
+                            240,780,830,300)*(-1)^rowid
+         ) %>% 
+  mutate(facet_var = quarter(date, with_year = T)) %>% 
+  
+  ggplot(aes(x=date, y=0)) + 
+  geom_line() + 
+  geom_point(aes(col=region)) +
+  geom_segment(aes(x=date, xend=date, col=region,
+                   y=0, yend=point_position)) +
+  geom_point(aes(y=point_position, col=region), shape=1) +
+  geom_text(aes(y=-10, 
+                label=paste0(day(date), " ", 
+                             month(date, label=T))), 
+            angle=30, 
+            vjust=1, hjust=1) + 
+  geom_label(aes(label=str_wrap(paste0(date, ": ", event), nchar/3), alpha=.7,
+                 # directions="y", min.segment.length = Inf,
+                 x=date, y=point_position, col=region, vjust="outward")) +
+  scale_x_date(date_breaks = "1 month", 
+               date_labels = "%b %Y") + 
+  # facet_wrap(~facet_var, strip.position="top",
+  #            ncol = 1, scales = "free_x") +
+  # coord_flip() +
+  ylim(-1200,1200) + 
+  coord_cartesian(clip = "off") + 
+  labs(subtitle = "AU/NSW Covid-19 timeline, 1st half 2020") +
+  theme_void(base_size = 23) +
+  theme(legend.position = "none", 
+        # rect = element_rect(fill = "transparent"),
+        plot.margin = unit(c(0, 2.3, 0, 2.3),"cm"),
+        # plot.background = element_rect(fill = NULL)
+        )
+```
+
+## Full
 
 ```{r, fig.width=10, fig.height=25}
 AU_timeline %>% 
@@ -83,7 +180,6 @@ AU_timeline %>%
         # plot.background = element_rect(fill = NULL)
         )
 ```
-
 
 # Time series
 ## Daily
