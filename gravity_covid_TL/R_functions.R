@@ -67,7 +67,8 @@ calc_gravity_TL <- function(input_df = n_poi_by_POA,
                             power = 2, 
                             dist_matrix = SYD_POA_dist) {
   # browser()
-  out_df <- SYD_POA_dist %>% 
+  out_df <- dist_matrix %>% 
+    filter(source != target) %>% 
     filter(target == TARGET_KEY) %>% 
     left_join(input_df, by = c("source"=JOIN_KEY)) %>% 
     select(source, target, dist, MASS_VAR)
@@ -85,15 +86,17 @@ calc_gravity_TL <- function(input_df = n_poi_by_POA,
   
   return(out_df %>% add_row(source = TARGET_KEY, 
                            target = TARGET_KEY, 
-                           gravity = max(out_df$gravity)) %>% 
+                           gravity = max(out_df$gravity, na.rm=T)) %>% 
            mutate(gravity_rank = min_rank(gravity))
          )
 }
 # calc_gravity_TL(n_poi_by_POA, "2145", "n_hospitals")
 
-plot_gravity_map_TL <- function(input_df, TARGET_KEY, MASS_VAR, POWER=2) {
+plot_gravity_map_TL <- function(input_df, TARGET_KEY, MASS_VAR, POWER=2, 
+                                dist_matrix = SYD_POA_dist) {
   input_df %>% 
-    calc_gravity_TL(TARGET_KEY, MASS_VAR, power = POWER) %>% 
+    calc_gravity_TL(TARGET_KEY, MASS_VAR, power = POWER, 
+                    dist_matrix = dist_matrix) %>% 
     filter(as.character(source) %in% SYD_POA$POA_NAME16) %>% 
     rename(POA_NAME16 = source) %>% 
     mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), gravity)) %>% 

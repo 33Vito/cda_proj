@@ -811,7 +811,8 @@ n_poi_by_POA %>%
 ```
 
 # Gravity
-## South Eastern SYD (2026)
+## South Eastern SYD (2026) {.tabset}
+### Radial distance
 
 ```{r, fig.width=9.5, fig.height=7}
 (
@@ -838,8 +839,42 @@ n_poi_by_POA %>%
   xlim(151.1,151.33) + ylim(-34,-33.7)
 )
 ```
+### Travel time distance
 
-## Western SYD (2145)
+```{r, fig.width=9.5, fig.height=7}
+(
+plot_gravity_map_TL(n_poi_by_POA, "2026", "n_hospitals", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7) | 
+plot_gravity_map_TL(n_poi_by_POA, "2026", "n_schools", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7) |
+plot_gravity_map_TL(n_poi_by_POA, "2026", "n_supermarkets", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7)
+) /
+(
+plot_gravity_map_TL(n_poi_by_POA, "2026", "n_shoppingCentres", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7) | 
+plot_gravity_map_TL(n_poi_by_POA, "2026", "n_publicTransports", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7) | 
+n_poi_by_POA %>% 
+  mutate(combined_index = 
+           normalised_n_hospitals +
+           normalised_n_schools +
+           normalised_n_supermarkets +
+           normalised_n_shoppingCentres +
+           normalised_n_publicTransports
+  ) %>% plot_gravity_map_TL("2026", "combined_index", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151.1,151.33) + ylim(-34,-33.7)
+)
+```
+
+## Western SYD (2145) {.tabset}
+### Radial distance
 
 ```{r, fig.width=9.5, fig.height=7}
 (
@@ -860,8 +895,36 @@ n_poi_by_POA %>%
   ) %>% plot_gravity_map_TL("2145", "combined_index")
 )
 ```
+### Travel time distance
 
-## Nothern SYD (2107)
+```{r, fig.width=9.5, fig.height=7}
+(
+plot_gravity_map_TL(n_poi_by_POA, "2145", "n_hospitals", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) | 
+plot_gravity_map_TL(n_poi_by_POA, "2145", "n_schools", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) |
+plot_gravity_map_TL(n_poi_by_POA, "2145", "n_supermarkets", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000))
+) /
+(
+plot_gravity_map_TL(n_poi_by_POA, "2145", "n_shoppingCentres", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) | 
+plot_gravity_map_TL(n_poi_by_POA, "2145", "n_publicTransports", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) | 
+n_poi_by_POA %>% 
+  mutate(combined_index = 
+           normalised_n_hospitals +
+           normalised_n_schools +
+           normalised_n_supermarkets +
+           normalised_n_shoppingCentres +
+           normalised_n_publicTransports
+  ) %>% plot_gravity_map_TL("2145", "combined_index", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000))
+)
+```
+
+## Nothern SYD (2107) {.tabset}
+### Radial distance
 
 ```{r, fig.width=9.5, fig.height=7}
 (
@@ -888,8 +951,39 @@ n_poi_by_POA %>%
   xlim(151,151.4) + ylim(-33.9,-33.5)
 )
 ```
+### Travel time distance
 
-
+```{r, fig.width=9.5, fig.height=7}
+(
+plot_gravity_map_TL(n_poi_by_POA, "2107", "n_hospitals", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5) | 
+plot_gravity_map_TL(n_poi_by_POA, "2107", "n_schools", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5) |
+plot_gravity_map_TL(n_poi_by_POA, "2107", "n_supermarkets", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5)
+) /
+(
+plot_gravity_map_TL(n_poi_by_POA, "2107", "n_shoppingCentres", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5) | 
+plot_gravity_map_TL(n_poi_by_POA, "2107", "n_publicTransports", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5) | 
+n_poi_by_POA %>% 
+  mutate(combined_index = 
+           normalised_n_hospitals +
+           normalised_n_schools +
+           normalised_n_supermarkets +
+           normalised_n_shoppingCentres +
+           normalised_n_publicTransports
+  ) %>% plot_gravity_map_TL("2107", "combined_index", 
+                    dist_matrix = SYD_POA_mapdist %>% mutate(dist = dist/1000)) + 
+  xlim(151,151.4) + ylim(-33.9,-33.5)
+)
+```
 
 
 

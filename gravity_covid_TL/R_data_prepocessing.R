@@ -92,9 +92,9 @@ n_poi_by_POA <- n_poi_by_POA %>%
   mutate(across(starts_with("n_"), function(x) (x - mean(x))/sd(x), 
                 .names = "scaled_{col}"))
 
-write_csv(n_poi_by_POA, "./data/count of amenities by postcode SYD.csv")
+# write_csv(n_poi_by_POA, "./data/count of amenities by postcode SYD.csv")
 
-# -----------------Distance matrix----------------------------------
+# -----------------Radial distance matrix----------------------------------
 
 spDistsN1(as.matrix(SYD_shops[,3:4]), as.matrix(SYD_shops[1,3:4]))
 
@@ -119,12 +119,87 @@ SYD_POA_dist <- map_dfr(SYD_POA$POA_NAME16,
   # distinct(source, target, dist) %>% 
   filter(source != target)
 
+# -----------------Travel distance matrix----------------------------------
 
+library(ggmap)
+register_google(key = "AIzaSyALvIJNI54O02X5MxjtTHefEu8kyne7Wg8", write = TRUE)
+SYD_POA_centroids <- getSpPPolygonsLabptSlots(SYD_POA) %>% 
+  as.data.frame() %>% 
+  rename(lon=V1, lat=V2) %>% 
+  mutate(POA_NAME16 = SYD_POA$POA_NAME16)
 
+##-------------deprecated due to poor error handling------------------------
+# SYD_POA_mapdist_2026 <- mapdist(
+#   rep(paste0("Sydney postcode ", 
+#              SYD_POA_centroids$POA_NAME16[210:215], 
+#              ", NSW, Australia"), 
+#       each=1),
+#   paste0("Sydney postcode ", 
+#          # rep(c("2026", "2145", "2107"), nrow(SYD_POA_centroids)), 
+#          "2026",
+#          ", NSW, Australia")
+#   )
+  # SYD_POA_centroids[
+  #   match(SYD_POA_dist$source, SYD_POA_centroids$POA_NAME16),1:2] %>% 
+  #   mutate(coord = paste(lon, lat, sep=",")) %>% pull(coord) %>% .[1:2], 
+  # SYD_POA_centroids[
+  #   match(SYD_POA_dist$target, SYD_POA_centroids$POA_NAME16),1:2] %>% 
+  #   mutate(coord = paste(lon, lat, sep=",")) %>% pull(coord) %>% .[1:2]
+  # ) %>% 
+  # mutate(from_POA_NAME16 = SYD_POA_centroids$POA_NAME16[
+  #   match(SYD_POA_dist$source, SYD_POA_centroids$POA_NAME16)], 
+  #        to_POA_NAME16 = SYD_POA_centroids$POA_NAME16[
+  #   match(SYD_POA_dist$target, SYD_POA_centroids$POA_NAME16)]
+  # )
+  # mutate(rep(SYD_POA_centroids$POA_NAME16, each=3))
 
+##-----commented out to load from csv (otherwise each api call cost money--------
 
-
-
+# safe_mapdist <- safely(mapdist, otherwise = NA)
+# 
+# SYD_POA_mapdist_2026 <- list()
+# for (i in 1:length(SYD_POA_centroids$POA_NAME16)) {
+#   SYD_POA_mapdist_2026[[i]] <- safe_mapdist(
+#     paste0("Sydney postcode ", SYD_POA_centroids$POA_NAME16[i], ", NSW, Australia"), 
+#     "Sydney postcode 2026, NSW, Australia"
+#   )
+# }
+# SYD_POA_mapdist_2145 <- list()
+# for (i in 1:length(SYD_POA_centroids$POA_NAME16)) {
+#   SYD_POA_mapdist_2145[[i]] <- safe_mapdist(
+#     paste0("Sydney postcode ", SYD_POA_centroids$POA_NAME16[i], ", NSW, Australia"), 
+#     "Sydney postcode 2145, NSW, Australia"
+#   )
+# }
+# SYD_POA_mapdist_2107 <- list()
+# for (i in 1:length(SYD_POA_centroids$POA_NAME16)) {
+#   SYD_POA_mapdist_2107[[i]] <- safe_mapdist(
+#     paste0("Sydney postcode ", SYD_POA_centroids$POA_NAME16[i], ", NSW, Australia"), 
+#     "Sydney postcode 2107, NSW, Australia"
+#   )
+# }
+# 
+# SYD_POA_mapdist <- bind_rows(
+#   map_dfr(SYD_POA_mapdist_2026, function(x) {if (!is.na(x$result)) x$result}), 
+#   map_dfr(SYD_POA_mapdist_2145, function(x) {if (!is.na(x$result)) x$result}), 
+#   map_dfr(SYD_POA_mapdist_2107, function(x) {if (!is.na(x$result)) x$result})
+# ) %>% 
+#   mutate(source = str_replace_all(from, "[Sydney postcode | , NSW, Australia]", 
+#                                 "") %>% str_trim() %>% as.character(), 
+#          target = str_replace_all(to, "[Sydney postcode | , NSW, Australia]", 
+#                               "") %>% str_trim() %>% as.character()
+#          ) %>% 
+#   rename(dist=minutes) %>% 
+#   select(source, target, dist)
+# 
+# write_csv(SYD_POA_mapdist, 
+#           "./data/full google map distence from 2026 2145 2107 by POA.csv")
+# write_csv(SYD_POA_mapdist,
+#           "./data/google map distence minutes from 2026 2145 2107 by POA.csv")
+SYD_POA_mapdist <- read_csv(
+  "./data/google map distence minutes from 2026 2145 2107 by POA.csv", 
+  col_types = list(col_character(), col_character(), col_double())
+)
 
 
 
