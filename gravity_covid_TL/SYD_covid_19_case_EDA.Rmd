@@ -30,7 +30,7 @@ knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
 
-# News headline 
+# News headline {.tabset}
 ## 1st half 2020
 
 ```{r, fig.width=10, fig.height=12}
@@ -195,9 +195,9 @@ confirmed_cases %>%
   labs(subtitle = "Daily new confirmed Covid-19 cases (SYD metro)") + 
   annotate("text", x=ymd(20200505), y=110, size=3.3, col="darkred", 
            label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney)") + 
-  annotate("text", x=ymd(20200815), y=30, size=3.3, col="darkred", 
-           label="2nd outbreak \n (Liverpool, Western Sydney)") + 
-  annotate("text", x=ymd(20210101), y=40, size=3.3, col="darkred", 
+  annotate("text", x=ymd(20200815), y=33, size=3.3, col="darkred", 
+           label="2nd outbreak \n (Westmead & Liverpool, \nWestern Sydney)") + 
+  annotate("text", x=ymd(20210101), y=42, size=3.3, col="darkred", 
            label="3rd outbreak \n (Avalon beach, Northern Sydney)") + 
   ggl()
 ```
@@ -264,7 +264,8 @@ confirmed_cases %>%
   facet_wrap(~lhd_2010_name) +
   labs(subtitle = "Accumulated confirmed Covid-19 cases (Sydney), by postcode") + 
   xlim(c(0,550)) +
-  ggl(lp = "none", )
+  ggl(lp = "none", ) + 
+  theme(strip.text.x = element_text(size = 12))
 ```
 
 # Map
@@ -590,7 +591,7 @@ confirmed_cases %>%
     count(postcode, name="Total_cases") %>% 
     rename(POA_NAME16 = postcode) %>% 
     mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
-    plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+    plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
                 "Total Covid-19 cases by POA (SYD Metro), with public transport", 
                 show_count = T, label_size = 2, return_obj = "map") +
   
@@ -645,7 +646,7 @@ bind_rows(
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "deepskyblue", "black", "darkgreen")) + 
+  ggc(fc = c("darkred", "deepskyblue", "darkorange", "darkgreen")) + 
   theme_void() +
   theme(legend.position = "none", 
         legend.title = element_blank(), 
@@ -658,7 +659,7 @@ confirmed_cases %>%
   count(postcode, name="Total_cases") %>% 
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
-  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
               "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
               show_count = T, label_size = 2, return_obj = "map") +
   
@@ -696,7 +697,7 @@ confirmed_cases %>%
   count(postcode, name="Total_cases") %>% 
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
-  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
               "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
               show_count = T, label_size = 2, return_obj = "map") +
   geom_line(data = SYD_trains, 

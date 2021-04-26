@@ -22,7 +22,7 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
     # scale_fill_viridis_c(option = "D", direction = -1, breaks = pretty_breaks(5)) +
     scale_alpha_continuous(range = c(0,.3)) +
     labs(title = title_text) + 
-    theme_void() +
+    theme_void(base_size=12) +
     # theme(legend.position = "right")
     theme(legend.position = c(.93,.15))
   
@@ -50,7 +50,7 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
     xlab("") + 
     ylim(c(0, 1.1*max(df[[fill_var]], na.rm=T))) + 
     labs(subtitle = paste0("Top 20 ", key_var)) + 
-    ggl() + 
+    ggl(base_size=12) + 
     theme(legend.position = "none")
   
   switch(return_obj, 

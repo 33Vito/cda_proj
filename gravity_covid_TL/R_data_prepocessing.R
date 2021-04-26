@@ -50,16 +50,16 @@ SYD_shops <- read_csv(
   filter(lon >= 150, lon <= 152) %>% 
   na.omit()
 
-SYD_trains <- read_csv("./data/SYD_geocodes/Trains/Trains.csv") %>% 
+SYD_trains <- read_csv("./data/SYD_geocodes/Public transports/Trains.csv") %>% 
   filter(lon >= 150, lon <= 152)
 
-SYD_ferries <- read_csv("./data/SYD_geocodes/Trains/Ferries.csv") %>% 
+SYD_ferries <- read_csv("./data/SYD_geocodes/Public transports/Ferries.csv") %>% 
   filter(lon >= 150, lon <= 152)
 
-SYD_lightrails <- read_csv("./data/SYD_geocodes/Trains/LightRails.csv") %>% 
+SYD_lightrails <- read_csv("./data/SYD_geocodes/Public transports/LightRails.csv") %>% 
   filter(lon >= 150, lon <= 152)
 
-SYD_metro <- read_csv("./data/SYD_geocodes/Trains/Metro.csv") %>% 
+SYD_metro <- read_csv("./data/SYD_geocodes/Public transports/Metro.csv") %>% 
   filter(lon >= 150, lon <= 152)
 
 # ------------------Places of interest count ----------------------------------
