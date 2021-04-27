@@ -92,7 +92,7 @@ n_poi_by_POA <- n_poi_by_POA %>%
   mutate(across(starts_with("n_"), function(x) (x - mean(x))/sd(x), 
                 .names = "scaled_{col}"))
 
-# write_csv(n_poi_by_POA, "./data/count of amenities by postcode SYD.csv")
+# write_csv(n_poi_by_POA, "./data/calculated_measures/count of amenities by postcode SYD.csv")
 
 # -----------------Radial distance matrix----------------------------------
 
@@ -193,15 +193,41 @@ SYD_POA_centroids <- getSpPPolygonsLabptSlots(SYD_POA) %>%
 #   select(source, target, dist)
 # 
 # write_csv(SYD_POA_mapdist, 
-#           "./data/full google map distence from 2026 2145 2107 by POA.csv")
+#           "./data/calculated_measures/full google map distence from 2026 2145 2107 by POA.csv")
 # write_csv(SYD_POA_mapdist,
-#           "./data/google map distence minutes from 2026 2145 2107 by POA.csv")
+#           "./data/calculated_measures/google map distence minutes from 2026 2145 2107 by POA.csv")
 SYD_POA_mapdist <- read_csv(
-  "./data/google map distence minutes from 2026 2145 2107 by POA.csv", 
+  "./data/calculated_measures/google map distence minutes from 2026 2145 2107 by POA.csv", 
   col_types = list(col_character(), col_character(), col_double())
 )
 
+## -----------------Gravity calculation--------------------------------
 
+gravity_to_cluster_by_POA <- bind_rows(
+list(target_key = c("2026", "2145", "2107"), 
+     mass_var = c("n_hospitals", "n_schools", "n_supermarkets", 
+                  "n_shoppingCentres", "n_publicTransports")) %>% 
+  cross_df() %>% 
+  mutate(gravity_df = map2(target_key, mass_var, 
+                           ~calc_gravity_TL(n_poi_by_POA, .x, .y))) %>% 
+  unnest(gravity_df) %>% 
+  mutate(dist_spec = "radial_distance") %>% 
+  relocate(mass_var, dist_spec), 
+list(target_key = c("2026", "2145", "2107"), 
+     mass_var = c("n_hospitals", "n_schools", "n_supermarkets", 
+                  "n_shoppingCentres", "n_publicTransports")) %>% 
+  cross_df() %>% 
+  mutate(gravity_df = map2(target_key, mass_var, 
+                           ~calc_gravity_TL(n_poi_by_POA, .x, .y, 
+                                            dist_matrix = SYD_POA_mapdist %>% 
+                                              mutate(dist = dist/1000)))) %>% 
+  unnest(gravity_df) %>% 
+  mutate(dist_spec = "travel_time") %>% 
+  relocate(mass_var, dist_spec)
+)
+
+write_csv(gravity_to_cluster_by_POA, 
+          "./data/calculated_measures/calculated gravity from 2026 2145 2107 by POA.csv")
 
 
 
