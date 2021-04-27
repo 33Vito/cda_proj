@@ -109,7 +109,23 @@ plot_gravity_map_TL <- function(input_df, TARGET_KEY, MASS_VAR, POWER=2,
 # plot_gravity_map_TL(n_poi_by_POA, "2145", "n_hospitals")
 
 
-
+#------------------Function to convert SSC features to POA-------------------
+convert_SSC_to_POA <- function(SSC_df, JOIN_KEY="SSC_NAME_2016")  {
+  SSC_df %>% 
+    # data.frame POA_to_SSC_mapping created from `R_data_prepocessing.R`
+    left_join(POA_to_SSC_mapping %>% 
+                rename("{JOIN_KEY}":="SSC_NAME_2016"), by=JOIN_KEY) %>% 
+    group_by(POA_NAME_2016) %>% 
+    mutate(wt = n_MB_CODE_2016/sum(n_MB_CODE_2016)) %>% 
+    summarise(across(-SSC_NAME_2016, ~weighted.mean(.x, wt))) %>% 
+    select(-n_MB_CODE_2016, -share_MB_CODE_2016, -wt) %>% 
+    ungroup()
+}
+# data.frame(SSC_NAME_2016 = c("Darlinghurst", "Surry Hills"), 
+#            avg_income = c(2000, 1000)) %>% 
+#   convert_SSC_to_POA() %>% 
+#   mutate(expected_avg_income = 2000*178/(178+198) + 1000*198/(178+198)) %>% 
+#   mutate(check = expected_avg_income == avg_income)
 
 
 

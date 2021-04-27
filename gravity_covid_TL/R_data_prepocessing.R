@@ -121,12 +121,12 @@ SYD_POA_dist <- map_dfr(SYD_POA$POA_NAME16,
 
 # -----------------Travel distance matrix----------------------------------
 
-library(ggmap)
-register_google(key = "AIzaSyALvIJNI54O02X5MxjtTHefEu8kyne7Wg8", write = TRUE)
-SYD_POA_centroids <- getSpPPolygonsLabptSlots(SYD_POA) %>% 
-  as.data.frame() %>% 
-  rename(lon=V1, lat=V2) %>% 
-  mutate(POA_NAME16 = SYD_POA$POA_NAME16)
+# library(ggmap)
+# register_google(key = "AIzaSyALvIJNI54O02X5MxjtTHefEu8kyne7Wg8", write = TRUE)
+# SYD_POA_centroids <- getSpPPolygonsLabptSlots(SYD_POA) %>% 
+#   as.data.frame() %>% 
+#   rename(lon=V1, lat=V2) %>% 
+#   mutate(POA_NAME16 = SYD_POA$POA_NAME16)
 
 ##-------------deprecated due to poor error handling------------------------
 # SYD_POA_mapdist_2026 <- mapdist(
@@ -201,7 +201,7 @@ SYD_POA_mapdist <- read_csv(
   col_types = list(col_character(), col_character(), col_double())
 )
 
-## -----------------Gravity calculation--------------------------------
+# -----------------Gravity calculation--------------------------------
 
 gravity_to_cluster_by_POA <- bind_rows(
 list(target_key = c("2026", "2145", "2107"), 
@@ -226,15 +226,27 @@ list(target_key = c("2026", "2145", "2107"),
   relocate(mass_var, dist_spec)
 )
 
-write_csv(gravity_to_cluster_by_POA, 
-          "./data/calculated_measures/calculated gravity from 2026 2145 2107 by POA.csv")
+# write_csv(gravity_to_cluster_by_POA, 
+#           "./data/calculated_measures/calculated gravity from 2026 2145 2107 by POA.csv")
 
+# ----------------mapping between POA and SSC-------------------------
+## SSC is MORE granular than POA, so one POA will contain multiple SSC
+## Used by `` function in `R_functions.R`
 
+POA_2016_SYD <- read_csv("./data/POA_2016_AUST.csv") %>% 
+  filter(POA_NAME_2016 %in% SYD_POA$POA_NAME16)
+SSC_2016_SYD <- read_csv("./data/SSC_2016_AUST.csv") %>% 
+  filter(MB_CODE_2016 %in% POA_2016_SYD$MB_CODE_2016)
 
-
-
-
-
+POA_to_SSC_mapping <- POA_2016_SYD %>% 
+  left_join(SSC_2016_SYD, by="MB_CODE_2016") %>% 
+  select(MB_CODE_2016, POA_NAME_2016, SSC_NAME_2016) %>% 
+  count(SSC_NAME_2016, POA_NAME_2016, name = "n_MB_CODE_2016") %>% 
+  group_by(SSC_NAME_2016) %>% 
+  mutate(share_MB_CODE_2016 = n_MB_CODE_2016/sum(n_MB_CODE_2016)) %>% 
+  slice_max(share_MB_CODE_2016, n=1)
+# write_csv(POA_to_SSC_mapping,
+#           "./data/calculated_measures/POA to SSC mapping.csv")
 
 
 
