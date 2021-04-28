@@ -3,8 +3,8 @@ library(sp)
 
 #-----------------------------Function to plot choropleth map-----------------------------
 plot_map_TL <- function(df, sdf, key_var, fill_var, title_text, 
-                        show_count=FALSE, label_size=3, 
-                        return_obj="combined") {
+                        show_count=FALSE, label_size=3, fill_col="darkred", 
+                        map_lp=c(.93,.15), return_obj="combined") {
   # browser()
   df['id'] <- unique(fortify(sdf)$id)[match(df[[key_var]], 
                                             sdf[[key_var]])] %>% as.character()
@@ -18,13 +18,13 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
              map = sdf_tidy, col="grey83", size=NA) +
     expand_limits(x = sdf_tidy$long, y = sdf_tidy$lat) +
     # xlim(150.7,151.48) + ylim(-34.1,-33.5) +
-    scale_fill_gradient(low="grey88", high="darkred") + 
+    scale_fill_gradient(low="grey88", high=fill_col) + 
     # scale_fill_viridis_c(option = "D", direction = -1, breaks = pretty_breaks(5)) +
     scale_alpha_continuous(range = c(0,.3)) +
     labs(title = title_text) + 
-    theme_void() +
+    theme_void(base_size=12) +
     # theme(legend.position = "right")
-    theme(legend.position = c(.93,.15))
+    theme(legend.position = map_lp)
   
   if (show_count) {
     sdf_centroids <- getSpPPolygonsLabptSlots(sdf) %>% as.data.frame()
@@ -44,13 +44,13 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
     geom_col(width=.8) + 
     geom_text(aes_string(label=fill_var), 
               hjust=0, vjust=.3, size=3.3, col="black") + 
-    scale_fill_gradient(low="grey88", high="darkred") + 
+    scale_fill_gradient(low="grey88", high=fill_col) + 
     # scale_fill_viridis_c(option = "D", direction = -1, breaks = pretty_breaks(5)) +
     coord_flip() + 
     xlab("") + 
     ylim(c(0, 1.1*max(df[[fill_var]], na.rm=T))) + 
     labs(subtitle = paste0("Top 20 ", key_var)) + 
-    ggl() + 
+    ggl(base_size=12) + 
     theme(legend.position = "none")
   
   switch(return_obj, 
@@ -58,3 +58,78 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
          "map" = gg_map, 
          "bar" = gg_bar)
 }
+
+#---------------------Function to calculate gravity -----------------------------
+
+calc_gravity_TL <- function(input_df = n_poi_by_POA, 
+                            TARGET_KEY, MASS_VAR, 
+                            JOIN_KEY = "POA_NAME16", 
+                            power = 2, 
+                            dist_matrix = SYD_POA_dist) {
+  # browser()
+  out_df <- dist_matrix %>% 
+    filter(source != target) %>% 
+    filter(target == TARGET_KEY) %>% 
+    left_join(input_df, by = c("source"=JOIN_KEY)) %>% 
+    select(source, target, dist, MASS_VAR)
+  
+  names(out_df)[4] <- "mass_source"
+  out_df$mass_source <- ifelse(out_df$mass_source == 0 | is.na(out_df$mass_source), 
+                               0.1, out_df$mass_source)
+  out_df$mass_target <- input_df[[MASS_VAR]][
+    match(out_df$target, input_df[[JOIN_KEY]])]
+  
+  out_df$mass_target <- ifelse(out_df$mass_target == 0 | is.na(out_df$mass_target), 
+                               0.1, out_df$mass_target)
+  
+  out_df$gravity = round(out_df$mass_source * out_df$mass_target / out_df$dist^power)
+  
+  return(out_df %>% add_row(source = TARGET_KEY, 
+                           target = TARGET_KEY, 
+                           gravity = max(out_df$gravity, na.rm=T)) %>% 
+           mutate(gravity_rank = min_rank(gravity))
+         )
+}
+# calc_gravity_TL(n_poi_by_POA, "2145", "n_hospitals")
+
+plot_gravity_map_TL <- function(input_df, TARGET_KEY, MASS_VAR, POWER=2, 
+                                dist_matrix = SYD_POA_dist) {
+  input_df %>% 
+    calc_gravity_TL(TARGET_KEY, MASS_VAR, power = POWER, 
+                    dist_matrix = dist_matrix) %>% 
+    filter(as.character(source) %in% SYD_POA$POA_NAME16) %>% 
+    rename(POA_NAME16 = source) %>% 
+    mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), gravity)) %>% 
+    plot_map_TL(SYD_POA, "POA_NAME16", "gravity", return_obj = "map", 
+                paste0("Gravity to postcode ",TARGET_KEY, " by\n", MASS_VAR)) + 
+    theme(legend.position = "none", 
+          plot.title = element_text(hjust = 0.5),
+          plot.subtitle=element_text(hjust = 0.5))
+}
+# plot_gravity_map_TL(n_poi_by_POA, "2145", "n_hospitals")
+
+
+#------------------Function to convert SSC features to POA-------------------
+convert_SSC_to_POA <- function(SSC_df, JOIN_KEY="SSC_NAME_2016")  {
+  SSC_df %>% 
+    # data.frame POA_to_SSC_mapping created from `R_data_prepocessing.R`
+    left_join(POA_to_SSC_mapping %>% 
+                rename("{JOIN_KEY}":="SSC_NAME_2016"), by=JOIN_KEY) %>% 
+    group_by(POA_NAME_2016) %>% 
+    mutate(wt = n_MB_CODE_2016/sum(n_MB_CODE_2016)) %>% 
+    summarise(across(-SSC_NAME_2016, ~weighted.mean(.x, wt))) %>% 
+    select(-n_MB_CODE_2016, -share_MB_CODE_2016, -wt) %>% 
+    ungroup()
+}
+# data.frame(SSC_NAME_2016 = c("Darlinghurst", "Surry Hills"), 
+#            avg_income = c(2000, 1000)) %>% 
+#   convert_SSC_to_POA() %>% 
+#   mutate(expected_avg_income = 2000*178/(178+198) + 1000*198/(178+198)) %>% 
+#   mutate(check = expected_avg_income == avg_income)
+
+
+
+
+
+
+
