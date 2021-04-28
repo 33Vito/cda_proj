@@ -4,7 +4,7 @@ library(sp)
 #-----------------------------Function to plot choropleth map-----------------------------
 plot_map_TL <- function(df, sdf, key_var, fill_var, title_text, 
                         show_count=FALSE, label_size=3, fill_col="darkred", 
-                        return_obj="combined") {
+                        map_lp=c(.93,.15), return_obj="combined") {
   # browser()
   df['id'] <- unique(fortify(sdf)$id)[match(df[[key_var]], 
                                             sdf[[key_var]])] %>% as.character()
@@ -24,7 +24,7 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
     labs(title = title_text) + 
     theme_void(base_size=12) +
     # theme(legend.position = "right")
-    theme(legend.position = c(.93,.15))
+    theme(legend.position = map_lp)
   
   if (show_count) {
     sdf_centroids <- getSpPPolygonsLabptSlots(sdf) %>% as.data.frame()
