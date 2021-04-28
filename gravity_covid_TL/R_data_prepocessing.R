@@ -240,8 +240,10 @@ SSC_2016_SYD <- read_csv("./data/SSC_2016_AUST.csv") %>%
 
 POA_to_SSC_mapping <- POA_2016_SYD %>% 
   left_join(SSC_2016_SYD, by="MB_CODE_2016") %>% 
-  select(MB_CODE_2016, POA_NAME_2016, SSC_NAME_2016) %>% 
-  count(SSC_NAME_2016, POA_NAME_2016, name = "n_MB_CODE_2016") %>% 
+  select(MB_CODE_2016, POA_CODE_2016 , POA_NAME_2016, 
+         SSC_CODE_2016, SSC_NAME_2016) %>% 
+  count(POA_CODE_2016 , POA_NAME_2016, 
+        SSC_CODE_2016, SSC_NAME_2016, name = "n_MB_CODE_2016") %>% 
   group_by(SSC_NAME_2016) %>% 
   mutate(share_MB_CODE_2016 = n_MB_CODE_2016/sum(n_MB_CODE_2016)) %>% 
   slice_max(share_MB_CODE_2016, n=1)
