@@ -646,7 +646,7 @@ bind_rows(
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "deepskyblue", "darkorange", "darkgreen")) + 
+  ggc(fc = c("darkred", "deepskyblue", "darkblue", "darkgreen")) + 
   theme_void() +
   theme(legend.position = "none", 
         legend.title = element_blank(), 
@@ -732,7 +732,7 @@ confirmed_cases %>%
   xlim(150.7,151.48) + ylim(-34.1,-33.5) +
   # scale_fill_gradient(low="white", high=DC[7]) + 
   scale_alpha_continuous(range = c(0,.3)) + 
-  ggc(fc = c("darkred", "darkblue", "darkorange", "darkgreen", 
+  ggc(fc = c("deepskyblue", "darkblue", "red", "darkgreen", 
              "darkblue", "red", "darkgreen", "orange")) + 
   guides(color = guide_legend(override.aes = list(size=3), 
                               title="POI")) + 
@@ -1018,7 +1018,8 @@ calc_gravity_TL(n_poi_by_POA, "2026", "n_hospitals",
   geom_point() + 
   stat_smooth() + 
   geom_text_repel(aes(label=text_lab)) + 
-  ggl()
+  labs(subtitle = "Based on total cases before date 2020-07-01") + 
+  ggl(base_size=12)
 ```
 ## Western SYD (2145)
 
@@ -1042,7 +1043,7 @@ calc_gravity_TL(n_poi_by_POA, "2145", "n_hospitals",
   left_join(
     confirmed_cases %>% 
       filter(notification_date >= ymd(20200701), 
-             notification_date < ymd(20201001)) %>% 
+             notification_date < ymd(20201101)) %>% 
       count(postcode, name = "total_cases") %>% 
       mutate(source = as.character(postcode)), 
     by="source"
@@ -1052,7 +1053,8 @@ calc_gravity_TL(n_poi_by_POA, "2145", "n_hospitals",
   geom_point() + 
   stat_smooth() + 
   geom_text_repel(aes(label=text_lab)) + 
-  ggl()
+  labs(subtitle = "Based on total cases between date 2020-07-01 and 2020-12-01") + 
+  ggl(base_size=12)
 ```
 
 ## Nothern SYD (2107)
@@ -1076,7 +1078,7 @@ calc_gravity_TL(n_poi_by_POA, "2107", "n_hospitals",
   # pdf()
   left_join(
     confirmed_cases %>% 
-      filter(notification_date >= ymd(20201201)) %>% 
+      filter(notification_date >= ymd(20201101)) %>% 
       count(postcode, name = "total_cases") %>% 
       mutate(source = as.character(postcode)), 
     by="source"
@@ -1086,9 +1088,42 @@ calc_gravity_TL(n_poi_by_POA, "2107", "n_hospitals",
   geom_point() + 
   stat_smooth() + 
   geom_text_repel(aes(label=text_lab)) +
-  ggl()
+  labs(subtitle = "Based on total cases after date 2020-12-01") + 
+  ggl(base_size=12)
 ```
 
+# Gravity parameters
+
+```{r}
+SYD_POA_mapdist %>% 
+  filter(target == "2145") %>% 
+  left_join(n_poi_by_POA, by=c("source"="POA_NAME16")) %>% 
+  left_join(n_poi_by_POA %>% filter(POA_NAME16 == "2145"), 
+            suffix = c("","_target"), 
+            by=c("target"="POA_NAME16")) %>% 
+  left_join(confirmed_cases %>% 
+              filter(notification_date >= ymd(20200701), 
+                     notification_date < ymd(20201101)) %>% 
+              count(postcode, name="Total_cases") %>% 
+              mutate(source = as.character(postcode)), by="source") %>% 
+  mutate(total_normalised_mass_source = 
+           normalised_n_hospitals + 
+           normalised_n_schools + 
+           normalised_n_supermarkets + 
+           normalised_n_shoppingCentres + 
+           normalised_n_publicTransports) %>% 
+
+  lm(log(Total_cases + 0.01) ~ 
+       # log(total_normalised_mass_source + 0.01) + 
+       log(n_hospitals + 0.01) +
+       log(n_schools + 0.01) +
+       log(n_supermarkets + 0.01) +
+       log(n_shoppingCentres + 0.01) +
+       log(n_publicTransports + 0.01) +
+       log(n_hospitals + 0.01) +
+       log(dist + 0.01), data=.) %>% 
+  summary()
+```
 
 
 
