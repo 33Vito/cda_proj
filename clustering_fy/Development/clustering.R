@@ -80,6 +80,17 @@ colnames(dw_2016) = c("ss", "house", "semi", "unit")
 dw_2016 = dw_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern)))
 
+# SSC to POA
+ssc_poa = read_csv("clustering_fy/Data/POA to SSC mapping.csv") %>%
+  select(POA_CODE_2016, SSC_CODE_2016)
+
+# SSC mapping
+ssc = read_csv("clustering_fy/Data/SSC_final.csv") %>%
+  left_join(ssc_poa, by = "SSC_CODE_2016") %>%
+  mutate(ss=SSC_2006_NAME, ssc=SSC_CODE_2016) %>%
+  filter(!is.na(POA_CODE_2016)) %>%
+  select(ss, ssc, POA_CODE_2016)
+
 # Suburb data together
 all_table = income_2016 %>%
   inner_join(income2_2016, by = 'ss') %>%
@@ -87,7 +98,48 @@ all_table = income_2016 %>%
   inner_join(tenure_2016, by = "ss") %>%
   inner_join(rent_2016, by = "ss") %>%
   inner_join(mortgage_2016, by = "ss") %>%
-  inner_join(dw_2016, by = "ss") 
+  inner_join(dw_2016, by = "ss") %>%
+  inner_join(ssc, by = "ss")
+
+# Suburbs with cluster
+all_table_cluster = bind_cols(all_table, all_table %>%
+  select(-c("ss", "ssc", "POA_CODE_2016")) %>%
+  helper_pc_convert() %>%
+  helper_clustering() %>%
+  select(cluster))
+
+# COVID input
+covid = read_csv("clustering_fy/Data/confirmed_cases_table4_location_likely_source.csv") %>%
+  filter(substr(likely_source_of_infection, 1, 5) == 'Local') %>%
+  select(notification_date, postcode, lga_name19)
+
+# Link post code
+covid_cluster = covid %>%
+  left_join(all_table_cluster, by = c("postcode"="POA_CODE_2016")) %>%
+  select(notification_date, postcode, lga_name19, cluster) %>% 
+  filter(!is.na(cluster))
+
+# Give a key to each covid case
+covid_cluster =  covid_cluster %>%
+  bind_cols(data.frame(case=1:nrow(covid_cluster)))
+
+# Identify how many near future cases can be identified from previous clusters
+covid_predicted = covid_cluster %>%
+  left_join(covid_cluster, by = "cluster") %>%
+  filter(notification_date.y - notification_date.x < 3, notification_date.y - notification_date.x > 0) %>%
+  select(c(6, 7, 8, 9, 4)) %>%
+  dplyr::distinct() %>%
+  arrange(case.y)
+
+# Initial effectiveness
+effectiveness = nrow(covid_predicted) / max(covid_cluster$case)
+
+effectiveness
+
+all_table %>%
+  group_by(ss) %>%
+  tally() %>%
+  arrange(desc(n))
 
 all_table1 = all_table %>%
   select(-ss) %>%
@@ -95,11 +147,13 @@ all_table1 = all_table %>%
 
 rownames(all_table1) = all_table$ss
 
-pc = principal(scale(all_table1), nfactors = 3, rotate='varimax')
+pc = principal(scale(all_table1), nfactors = ncol(all_table1), rotate='varimax')
 pc
 plot(pc$values[1:4], type="b", main="Scree Plot")
 
+
 k = kmeans(all_table1, 6)
+k$cluster
 
 all_table2 = cbind(all_table1, as.factor(k$cluster)) %>%
   mutate(ss = rownames(all_table1))
