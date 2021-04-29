@@ -15,4 +15,3 @@ helper_clustering = function(table) {
   table$cluster = k$cluster
   return(table)
 }
-
