@@ -307,6 +307,19 @@ confirmed_cases %>%
 ```
 
 ```{r, fig.width=9.5, fig.height=7}
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  rename(POA_NAME16 = postcode) %>%
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
+  mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107", "2170"),
+                                 "cluster_origin", "") %>% as.factor) %>%
+  plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster_origin",
+              "Total Covid-19 cases by POA (SYD Metro), highlighted by cluster origin",
+              show_count = T, label_size = 2)
+```
+
+```{r, fig.width=9.5, fig.height=7}
 confirmed_cases %>% 
   filter(!(postcode %in% c(2026, 2145, 2170))) %>% 
   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 

@@ -77,6 +77,7 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
   sdf_tidy <- fortify(sdf) %>% 
     left_join(df, by="id")
   sdf_tidy[[fill_var]] <- replace_na(sdf_tidy[[fill_var]], 0)
+  sdf_tidy[[factor_var]] <- fct_explicit_na(sdf_tidy[[factor_var]], "") 
   
   gg_map <- ggplot(sdf_tidy) +
     geom_map(inherit.aes = FALSE, alpha=.85,
@@ -84,8 +85,8 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
              map = sdf_tidy, col="grey83", size=NA) +
     expand_limits(x = sdf_tidy$long, y = sdf_tidy$lat) +
     # xlim(150.7,151.48) + ylim(-34.1,-33.5) +
-    # scale_fill_brewer(palette = "Set1") + 
-    # scale_alpha_continuous(range = c(0,.3)) +
+    scale_fill_brewer(palette = "Set2") +
+    # scale_fill_manual(values = DC) +
     labs(title = title_text) + 
     theme_void(base_size=12) +
     # theme(legend.position = "right")
@@ -109,7 +110,8 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
     geom_col(width=.8) + 
     geom_text(aes_string(label=fill_var), 
               hjust=0, vjust=.3, size=3.3, col="black") + 
-    # scale_fill_brewer(palette = "Set1") + 
+    scale_fill_brewer(palette = "Set2") +
+    # scale_fill_manual(values = DC) +
     coord_flip() + 
     xlab("") + 
     ylim(c(0, 1.1*max(df[[fill_var]], na.rm=T))) + 
