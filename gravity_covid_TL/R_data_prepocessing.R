@@ -1,7 +1,11 @@
 source("R_functions.R")
 
 # -------------SYD confirmed cases by postcode----------------
-confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
+# confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
+confirmed_cases <- read_csv(
+  "data/confirmed_cases_table4_location_likely_source.csv") %>% 
+  filter(str_detect(likely_source_of_infection, "Locally")) %>% 
+  select(-likely_source_of_infection)
 
 # -------------SYD shp file data------------------------------
 SYD_POA <- readRDS("data/SYD_POA.rds")

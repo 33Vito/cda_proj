@@ -193,11 +193,11 @@ confirmed_cases %>%
   geom_line() + 
   ylab("Count of cases") + 
   labs(subtitle = "Daily new confirmed Covid-19 cases (SYD metro)") + 
-  annotate("text", x=ymd(20200505), y=110, size=3.3, col="darkred", 
+  annotate("text", x=ymd(20200505), y=60, size=3.3, col="darkred", 
            label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney)") + 
-  annotate("text", x=ymd(20200815), y=33, size=3.3, col="darkred", 
+  annotate("text", x=ymd(20200815), y=25, size=3.3, col="darkred", 
            label="2nd outbreak \n (Westmead & Liverpool, \nWestern Sydney)") + 
-  annotate("text", x=ymd(20210101), y=42, size=3.3, col="darkred", 
+  annotate("text", x=ymd(20210101), y=35, size=3.3, col="darkred", 
            label="3rd outbreak \n (Avalon beach, Northern Sydney)") + 
   ggl()
 ```
@@ -219,7 +219,7 @@ confirmed_cases %>%
 ```{r, fig.width=8, fig.height=5}
 confirmed_cases %>% 
   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
-  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Metro Sydney", 
+  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Sydney (around CBD)", 
                                 lhd_2010_name)) %>% 
   # mutate(lhd_2010_name = ifelse(is.na(lhd_2010_name), "Unknown", lhd_2010_name)) %>%
   count(lhd_2010_name, notification_date) %>% 
@@ -312,7 +312,7 @@ confirmed_cases %>%
   count(postcode, name="Total_cases") %>%
   rename(POA_NAME16 = postcode) %>%
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
-  mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107", "2170"),
+  mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107"),
                                  "cluster_origin", "") %>% as.factor) %>%
   plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster_origin",
               "Total Covid-19 cases by POA (SYD Metro), highlighted by cluster origin",
@@ -376,10 +376,10 @@ confirmed_cases %>%
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
               "POA_NAME16", "Accumulated_cases", 
-           "Total Covid-19 cases by POA (SYD Metro)", 
+           "Total accumulated Covid-19 cases by POA (SYD Metro), overtime", 
            return_obj="map") + 
   facet_wrap(~facet_var) + 
-  theme(legend.position = "top")
+  theme_map_facet_TL
 ```
 
 ### Accumulated share
@@ -408,7 +408,7 @@ confirmed_cases %>%
            "Total Covid-19 cases by POA (SYD Metro)", 
            return_obj="map") + 
   facet_wrap(~facet_var) + 
-  theme(legend.position = "top")
+  theme_map_facet_TL
 ```
 
 ## By week Mar-May 2020 {.tabset}
@@ -441,7 +441,8 @@ confirmed_cases %>%
               "POA_NAME16", "Accumulated_cases", 
               "Total Covid-19 cases by POA (SYD Metro)", 
               return_obj="map") + 
-  facet_wrap(~facet_var)
+  facet_wrap(~facet_var) + 
+  theme_map_facet_TL + theme(legend.position = c(.83, .15))
 ```
 
 ### Accumulated share
@@ -472,7 +473,8 @@ confirmed_cases %>%
               "POA_NAME16", "Accumulated_share", 
               "Total Covid-19 cases by POA (SYD Metro)", 
               return_obj="map") + 
-  facet_wrap(~facet_var)
+  facet_wrap(~facet_var) + 
+  theme_map_facet_TL + theme(legend.position = c(.83, .15))
 ```
 
 # Distribution of share overtime

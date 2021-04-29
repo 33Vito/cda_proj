@@ -24,7 +24,10 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
     labs(title = title_text) + 
     theme_void(base_size=12) +
     # theme(legend.position = "right")
-    theme(legend.position = map_lp)
+    theme(legend.position = map_lp, 
+          legend.title = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.key.size = unit(1,"line"))
   
   if (show_count) {
     sdf_centroids <- getSpPPolygonsLabptSlots(sdf) %>% as.data.frame()
@@ -135,6 +138,12 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
 #               "Total Covid-19 cases by POA (SYD Metro), by cluster", 
 #               show_count = T, label_size = 2)
 
+theme_map_facet_TL <- theme(legend.position = c(.85, 1.15), 
+                            legend.justification = "top",
+                            legend.direction = "horizontal", 
+                            legend.text = element_text(angle=30, size=9), 
+                            plot.title = element_text(margin=unit(c(1,1,10,1), "mm")), 
+                            plot.margin=unit(c(5,1,1,1),"mm"))
 
 #---------------------Function to calculate gravity -----------------------------
 
