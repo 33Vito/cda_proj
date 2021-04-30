@@ -168,7 +168,10 @@ calc_gravity_TL <- function(input_df = n_poi_by_POA,
   out_df$mass_target <- ifelse(out_df$mass_target == 0 | is.na(out_df$mass_target), 
                                0.1, out_df$mass_target)
   
-  out_df$gravity = round(out_df$mass_source * out_df$mass_target / out_df$dist^power)
+  out_df$gravity <- round(out_df$mass_source * out_df$mass_target / out_df$dist^power)
+  # out_df$gravity <- scale(out_df$gravity)
+  # out_df$gravity <-  (out_df$gravity - min(out_df$gravity, na.rm=T))/(
+  #   max(out_df$gravity, na.rm=T) - min(out_df$gravity, na.rm=T))
   
   return(out_df %>% add_row(source = TARGET_KEY, 
                            target = TARGET_KEY, 

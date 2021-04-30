@@ -15,10 +15,6 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# source("utility.R")
-source("R_functions.R")
-source("R_data_prepocessing.R")
-
 options(scipen=999, expressions=50000, 
         DT.options = list(pageLength = 8,
                           scrollX = TRUE,
@@ -29,6 +25,13 @@ options(scipen=999, expressions=50000,
 knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=4)
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
 ```
+
+```{r}
+# source("utility.R")
+source("R_functions.R")
+source("R_data_prepocessing.R")
+```
+
 
 # News headline {.tabset}
 ## 1st half 2020
@@ -192,7 +195,7 @@ confirmed_cases %>%
   # geom_point() + 
   geom_line() + 
   ylab("Count of cases") + 
-  labs(subtitle = "Daily new confirmed Covid-19 cases (SYD metro)") + 
+  labs(subtitle = "Daily new confirmed Covid-19 cases (SYD)") + 
   annotate("text", x=ymd(20200505), y=60, size=3.3, col="darkred", 
            label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney)") + 
   annotate("text", x=ymd(20200815), y=25, size=3.3, col="darkred", 
@@ -229,13 +232,13 @@ confirmed_cases %>%
   mutate(lab = ifelse(notification_date == max(notification_date, na.rm=T), 
                       lhd_2010_name, NA)) %>% 
   
-  ggplot(aes(x=days_since_first_case , y=accumulated_cases, col=lhd_2010_name)) + 
+  ggplot(aes(x=notification_date , y=accumulated_cases, col=lhd_2010_name)) + 
   # geom_point() + 
   geom_line() + 
   geom_text_repel(aes(label=lab), size=4, hjust=-.1, min.segment.length = 10) + 
   # facet_wrap(~lhd_2010_name) + 
   labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by region") + 
-  xlim(c(0,550)) +
+  # xlim(c(0,550)) +
   ggl(lp = "none") 
 ```
 
@@ -255,15 +258,15 @@ confirmed_cases %>%
   mutate(accumulated_cases = cumsum(n)) %>% 
   mutate(lab=ifelse(notification_date == max(notification_date), postcode, NA)) %>% 
   
-  ggplot(aes(x=days_since_first_case , y=accumulated_cases, 
+  ggplot(aes(x=notification_date , y=accumulated_cases, 
              group=postcode,
              col=lhd_2010_name)) + 
   # geom_point() + 
   geom_line() + 
   geom_text(aes(label=lab), size=3, hjust="outward") + 
   facet_wrap(~lhd_2010_name) +
-  labs(subtitle = "Accumulated confirmed Covid-19 cases (Sydney), by postcode") + 
-  xlim(c(0,550)) +
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by postcode") + 
+  # xlim(c(0,550)) +
   ggl(lp = "none", ) + 
   theme(strip.text.x = element_text(size = 12))
 ```
@@ -290,7 +293,7 @@ confirmed_cases %>%
   rename(LGA_NAME19 = lga_name19) %>% 
   mutate(LGA_NAME19 = fct_reorder(LGA_NAME19, Total_cases)) %>% 
   plot_map_TL(SYD_LGA, "LGA_NAME19", "Total_cases", 
-           "Total Covid-19 cases by LGA (SYD Metro)", show_count = T)
+           "Total Covid-19 cases by LGA (SYD)", show_count = T)
 ```
 
 ## POA
@@ -302,7 +305,7 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
-           "Total Covid-19 cases by POA (SYD Metro)", 
+           "Total Covid-19 cases by POA (SYD)", 
            show_count = T, label_size = 2)
 ```
 
@@ -315,7 +318,7 @@ confirmed_cases %>%
   mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107"),
                                  "cluster_origin", "") %>% as.factor) %>%
   plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster_origin",
-              "Total Covid-19 cases by POA (SYD Metro), highlighted by cluster origin",
+              "Total Covid-19 cases by POA (SYD), highlighted by cluster origin",
               show_count = T, label_size = 2)
 ```
 
@@ -327,7 +330,7 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
-           "Total Covid-19 cases by POA (SYD Metro), excluding top 3 POA", 
+           "Total Covid-19 cases by POA (SYD), excluding top 3 POA", 
            show_count = T, label_size = 2)
 ```
 
@@ -376,7 +379,7 @@ confirmed_cases %>%
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
               "POA_NAME16", "Accumulated_cases", 
-           "Total accumulated Covid-19 cases by POA (SYD Metro), overtime", 
+           "Total accumulated Covid-19 cases by POA (SYD), overtime", 
            return_obj="map") + 
   facet_wrap(~facet_var) + 
   theme_map_facet_TL
@@ -405,7 +408,7 @@ confirmed_cases %>%
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
               "POA_NAME16", "Accumulated_share", 
-           "Total Covid-19 cases by POA (SYD Metro)", 
+           "Total Covid-19 cases by POA (SYD)", 
            return_obj="map") + 
   facet_wrap(~facet_var) + 
   theme_map_facet_TL
@@ -439,7 +442,7 @@ confirmed_cases %>%
   
   plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
               "POA_NAME16", "Accumulated_cases", 
-              "Total Covid-19 cases by POA (SYD Metro)", 
+              "Total Covid-19 cases by POA (SYD)", 
               return_obj="map") + 
   facet_wrap(~facet_var) + 
   theme_map_facet_TL + theme(legend.position = c(.83, .15))
@@ -471,7 +474,7 @@ confirmed_cases %>%
   
   plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
               "POA_NAME16", "Accumulated_share", 
-              "Total Covid-19 cases by POA (SYD Metro)", 
+              "Total Covid-19 cases by POA (SYD)", 
               return_obj="map") + 
   facet_wrap(~facet_var) + 
   theme_map_facet_TL + theme(legend.position = c(.83, .15))
@@ -607,7 +610,7 @@ confirmed_cases %>%
     rename(POA_NAME16 = postcode) %>% 
     mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
     plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
-                "Total Covid-19 cases by POA (SYD Metro), with public transport", 
+                "Total Covid-19 cases by POA (SYD), with public transport", 
                 show_count = T, label_size = 2, return_obj = "map") +
   
   # geom_map(inherit.aes = FALSE, alpha=.85,
@@ -675,7 +678,7 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
-              "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
+              "Total Covid-19 cases by POA (SYD), with hospitals, schools & supermarkets", 
               show_count = T, label_size = 2, return_obj = "map") +
   
   # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
@@ -713,7 +716,7 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
-              "Total Covid-19 cases by POA (SYD Metro), with hospitals, schools & supermarkets", 
+              "Total Covid-19 cases by POA (SYD), with hospitals, schools & supermarkets", 
               show_count = T, label_size = 2, return_obj = "map") +
   geom_line(data = SYD_trains, 
             aes(x=lon, y=lat, col="Train",
