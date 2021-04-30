@@ -197,11 +197,11 @@ confirmed_cases %>%
   ylab("Count of cases") + 
   labs(subtitle = "Daily new confirmed Covid-19 cases (SYD)") + 
   annotate("text", x=ymd(20200505), y=60, size=3.3, col="darkred", 
-           label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney)") + 
+           label="1st outbreak \n (Bondi beach, \nSouth Eastern \nSydney, 2026)") + 
   annotate("text", x=ymd(20200815), y=25, size=3.3, col="darkred", 
-           label="2nd outbreak \n (Westmead & Liverpool, \nWestern Sydney)") + 
+           label="2nd outbreak \n (Westmead & Liverpool, \nWestern Sydney, 2145)") + 
   annotate("text", x=ymd(20210101), y=35, size=3.3, col="darkred", 
-           label="3rd outbreak \n (Avalon beach, Northern Sydney)") + 
+           label="3rd outbreak \n (Avalon beach, Northern Sydney, 2107)") + 
   ggl()
 ```
 
@@ -244,7 +244,7 @@ confirmed_cases %>%
 
 ```{r, fig.width=9, fig.height=6}
 confirmed_cases %>% 
-  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Metro Sydney", 
+  mutate(lhd_2010_name = ifelse(lhd_2010_name == "Sydney", "Sydney (around CBD)", 
                                 lhd_2010_name)) %>% 
   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
   # filter(lhd_2010_name %in% c("South Eastern Sydney", 
@@ -678,7 +678,7 @@ confirmed_cases %>%
   rename(POA_NAME16 = postcode) %>% 
   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", fill_col = "grey33",
-              "Total Covid-19 cases by POA (SYD), with hospitals, schools & supermarkets", 
+              "Total Covid-19 cases by POA (SYD), overlayed with hospitals, schools, shopping centres & supermarkets", 
               show_count = T, label_size = 2, return_obj = "map") +
   
   # geom_map(data = SYD_POA, inherit.aes = FALSE, alpha=.85,
@@ -761,6 +761,66 @@ confirmed_cases %>%
 ```
 
 ## POI count QA {.tabset}
+
+```{r, fig.width=9.5, fig.height=12}
+grid.arrange(
+n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  # gather(key, value, -POA_NAME16) %>% 
+  select(POA_NAME16, n_hospitals) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, n_hospitals)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "n_hospitals", 
+              "Number of hospitals by POA", 
+              show_count = T, fill_col = "darkred", 
+              return_obj = "map"), 
+n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  # gather(key, value, -POA_NAME16) %>% 
+  select(POA_NAME16, n_schools) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, n_schools)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "n_schools", 
+              "Number of schools by POA", 
+              show_count = T, fill_col = "deepskyblue", 
+              return_obj = "map"), 
+n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  # gather(key, value, -POA_NAME16) %>% 
+  select(POA_NAME16, n_supermarkets) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, n_supermarkets)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "n_supermarkets", 
+              "Number of supermarkets by POA", 
+              show_count = T, fill_col = "darkgreen", 
+              return_obj = "map"), 
+n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  # gather(key, value, -POA_NAME16) %>% 
+  select(POA_NAME16, n_shoppingCentres) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, n_shoppingCentres)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "n_shoppingCentres", 
+              "Number of shopping centres by POA", 
+              show_count = T, fill_col = "black", 
+              return_obj = "map"), 
+n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  # gather(key, value, -POA_NAME16) %>% 
+  select(POA_NAME16, n_publicTransports ) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, n_publicTransports )) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "n_publicTransports", 
+              "Number of public transports by POA", 
+              show_count = T, fill_col = "darkorange", 
+              return_obj = "map"), 
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  count(postcode, name="Total_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+           "Total Covid-19 cases by POA (SYD)", 
+           show_count = T, label_size = 2, 
+              return_obj = "map"), 
+ncol=2)
+```
+
 ### Hospital
 
 ```{r, fig.width=9.5, fig.height=7}
