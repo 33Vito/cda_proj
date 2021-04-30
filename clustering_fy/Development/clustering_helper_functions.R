@@ -28,3 +28,28 @@ helper_h_clustering = function(table) {
   return(table)
 }
 
+# Calculating effectiveness
+helper_effective = function(cluster_table, lockdon_n=1) {
+# Link post code
+covid_cluster = covid %>%
+  left_join(cluster_table, by = c("postcode"="POA_CODE_2016")) %>%
+  select(notification_date, postcode, lga_name19, cluster) %>% 
+  filter(!is.na(cluster))
+
+# Give a key to each covid case
+covid_cluster =  covid_cluster %>%
+  bind_cols(data.frame(case=1:nrow(covid_cluster)))
+
+# Identify how many near future cases can be identified from previous clusters
+covid_predicted = covid_cluster %>%
+  left_join(covid_cluster, by = "cluster") %>%
+  filter(notification_date.y - notification_date.x <= lockdon_n, notification_date.y - notification_date.x > 0) %>%
+  select(c(6, 7, 8, 9, 4)) %>%
+  dplyr::distinct() %>%
+  arrange(case.y)
+
+# Initial effectiveness
+effectiveness = nrow(covid_predicted) / max(covid_cluster$case)
+
+return(effectiveness)
+}
