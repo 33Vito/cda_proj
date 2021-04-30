@@ -15,6 +15,9 @@ library(psych)
 library(ggplot2)
 library(plotly)
 library(ggrepel)
+library(rgdal)
+library(rgeos)
+
 setwd("C:/Users/Fred/Downloads/code/cda_proj")
 
 b_pattern = escape_special("(") %R%
@@ -136,7 +139,44 @@ all_table_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_
                                   helper_clustering() %>%
                                   select(cluster))
 
+# Base scenario - assume government locks down neighbourhood suburbs
+
+# Import shape file
+suburbs = readOGR("clustering_fy/Data/shape_file/SSC_2016_AUST.shp")
+
+# Only relevant suburbs included
+suburbs2 = subset(suburbs, suburbs$SSC_CODE16 %in% SSC_2016_AUST$SSC_CODE_2016)
+ss_col = suburbs2$SSC_CODE16
+
+ss_adj = gTouches(suburbs2, byid = T)
+
+colnames(ss_adj) = ss_col
+rownames(ss_adj) = ss_col
+
+# Convert contingency table into relationship table
+link = as.data.frame(as.table(ss_adj))
+colnames(link)
 
 
+# Add suburbs view
+adj_suburb = link %>%
+  filter(Freq==T) %>%
+  inner_join(ssc_poa %>% mutate(SSC_CODE_2016 = as.factor(SSC_CODE_2016)), by = c("Var1" = "SSC_CODE_2016")) %>%
+  mutate(POA1 = POA_CODE_2016) %>%
+  select(-c(Freq, POA_CODE_2016)) %>%
+  inner_join(ssc_poa %>% mutate(SSC_CODE_2016 = as.factor(SSC_CODE_2016)), by = c("Var2" = "SSC_CODE_2016")) %>%
+  mutate(POA2 = POA_CODE_2016) %>%
+  filter(POA1 != POA2) %>%
+  select(-POA_CODE_2016)
+
+# Add cluster index for base scenario
+adj_suburb_key = adj_suburb %>%
+  bind_cols(data.frame(cluster=1:nrow(adj_suburb)))
+
+# Form base scenario detection table
+base_cluster = bind_rows(select(adj_suburb_key %>% mutate(POA_CODE_2016 = POA1), POA_CODE_2016, cluster), 
+                         select(adj_suburb_key %>% mutate(POA_CODE_2016 = POA2), POA_CODE_2016, cluster))
+
+helper_effective(base_cluster, lockdon_n = 14)
 helper_effective(all_table_h_cluster, lockdon_n = 14)
 helper_effective(all_table_cluster, lockdon_n = 14)
