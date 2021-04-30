@@ -88,7 +88,7 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
              map = sdf_tidy, col="grey83", size=NA) +
     expand_limits(x = sdf_tidy$long, y = sdf_tidy$lat) +
     # xlim(150.7,151.48) + ylim(-34.1,-33.5) +
-    scale_fill_brewer(palette = "Set2") +
+    # scale_fill_brewer(palette = "Set2") +
     # scale_fill_manual(values = DC) +
     labs(title = title_text) + 
     theme_void(base_size=12) +
@@ -113,7 +113,7 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
     geom_col(width=.8) + 
     geom_text(aes_string(label=fill_var), 
               hjust=0, vjust=.3, size=3.3, col="black") + 
-    scale_fill_brewer(palette = "Set2") +
+    # scale_fill_brewer(palette = "Set2") +
     # scale_fill_manual(values = DC) +
     coord_flip() + 
     xlab("") + 
@@ -127,16 +127,16 @@ plot_map_factor_TL <- function(df, sdf, key_var, fill_var, factor_var, title_tex
          "map" = gg_map, 
          "bar" = gg_bar)
 }
-# confirmed_cases %>% 
-#   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
-#   count(postcode, name="Total_cases") %>% 
-#   rename(POA_NAME16 = postcode) %>% 
-#   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
-#   mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107"), 
-#                                  "cluster_origin", "other") %>% as.factor) %>% 
-#   plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "POA_NAME16", 
-#               "Total Covid-19 cases by POA (SYD Metro), by cluster", 
-#               show_count = T, label_size = 2)
+# confirmed_cases %>%
+#   filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+#   count(postcode, name="Total_cases") %>%
+#   rename(POA_NAME16 = postcode) %>%
+#   mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
+#   mutate(cluster_origin = ifelse(POA_NAME16 %in% c("2026", "2145", "2107"),
+#                                  "cluster_origin", "") %>% as.factor) %>%
+#   plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster_origin",
+#                      "Total Covid-19 cases by POA (SYD), highlighted by cluster origin",
+#                      show_count = T, label_size = 2)
 
 theme_map_facet_TL <- theme(legend.position = c(.85, 1.15), 
                             legend.justification = "top",
@@ -217,7 +217,63 @@ convert_SSC_to_POA <- function(SSC_df, JOIN_KEY="SSC_NAME_2016")  {
 #   mutate(check = expected_avg_income == avg_income)
 
 
+# ---------------------Clustering------------------------------------------
 
+# Principle component transform
+# Convert original datasets' raw features to PC features
+helper_pc_convert = function(table, cutoff=0.9) {
+  pc = principal(scale(table), nfactors = ncol(table), rotate='varimax')
+  # min n required for var explanability to reach cutoff point
+  n_keep = min(which(cumsum(pc$values/sum(pc$values))>cutoff))
+  
+  all_table_pc = data.frame(pc$scores)[, 1:n_keep]
+  
+  return(all_table_pc)
+}
+
+# Empirically determine n by setting an average of 8 suburbs per cluster
+helper_clustering = function(table) {
+  n = floor(nrow(table)/8)
+  k = kmeans(table, n)
+  table$cluster = k$cluster
+  return(table)
+}
+
+# Empirically determine n by setting an average of 8 suburbs per cluster
+# Hierarchical clustering
+helper_h_clustering = function(table) {
+  n = floor(nrow(table)/8)
+  hierar = hclust(dist(table))
+  fit = cutree(hierar, k = n)
+  table$cluster = fit
+  return(table)
+}
+
+# Calculating effectiveness
+helper_effective = function(cluster_table, lockdon_n=1) {
+  # Link post code
+  covid_cluster = covid %>%
+    left_join(cluster_table, by = c("postcode"="POA_CODE_2016")) %>%
+    select(notification_date, postcode, lga_name19, cluster) %>% 
+    filter(!is.na(cluster))
+  
+  # Give a key to each covid case
+  covid_cluster =  covid_cluster %>%
+    bind_cols(data.frame(case=1:nrow(covid_cluster)))
+  
+  # Identify how many near future cases can be identified from previous clusters
+  covid_predicted = covid_cluster %>%
+    left_join(covid_cluster, by = "cluster") %>%
+    filter(notification_date.y - notification_date.x <= lockdon_n, notification_date.y - notification_date.x > 0) %>%
+    select(c(6, 7, 8, 9, 4)) %>%
+    dplyr::distinct() %>%
+    arrange(case.y)
+  
+  # Initial effectiveness
+  effectiveness = nrow(covid_predicted) / max(covid_cluster$case)
+  
+  return(effectiveness)
+}
 
 
 

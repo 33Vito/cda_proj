@@ -1203,7 +1203,64 @@ SYD_POA_mapdist %>%
   summary()
 ```
 
+# Clustering
 
+```{r, fig.width=9.5, fig.height=7}
+library(psych)
+
+gravity_score_pivoted <- 
+  gravity_to_cluster_by_POA %>% 
+    filter(dist_spec == "radial_distance") %>% 
+    select(mass_var, source, target, gravity) %>% 
+    # mutate(gravity = log(gravity + 0.01)) %>% 
+    pivot_wider(names_from = mass_var, values_from = gravity) %>% 
+    pivot_wider(names_from = target, 
+                values_from = n_hospitals:n_publicTransports) %>% 
+    rename(POA_NAME16 = source)
+
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  mutate(POA_NAME16 = as.character(postcode)) %>%
+  
+  left_join(
+      gravity_score_pivoted[,-1] %>% 
+      helper_pc_convert() %>%
+      helper_clustering() %>%
+      bind_cols(gravity_score_pivoted[,1]) %>%
+      mutate(cluster = as.factor(cluster))
+  , by = "POA_NAME16") %>%
+  mutate(cluster = fct_explicit_na(cluster)) %>%
+  
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
+  plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster",
+              "Total Covid-19 cases and cluster by POA (SYD)",
+              show_count = T, label_size = 2)
+```
+
+```{r}
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  mutate(POA_NAME16 = as.character(postcode)) %>%
+  
+  left_join(
+      gravity_score_pivoted[,-1] %>% 
+      helper_pc_convert() %>%
+      helper_clustering() %>%
+      bind_cols(gravity_score_pivoted[,1]) %>%
+      mutate(cluster = as.factor(cluster))
+  , by = "POA_NAME16") %>%
+  mutate(cluster = fct_explicit_na(cluster)) %>% 
+  
+  group_by(cluster) %>% 
+  summarise(Total_cases = sum(Total_cases)) %>% 
+  mutate(cluster = fct_reorder(cluster, Total_cases)) %>% 
+  
+  ggplot(aes(x=cluster, y=Total_cases)) + 
+  geom_col() + 
+  ggl()
+```
 
 
 
