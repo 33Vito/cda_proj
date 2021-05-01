@@ -30,79 +30,80 @@ SSC_2016_AUST_CLEAN = SSC_2016_AUST %>%
   filter(STATE_NAME_2016 == 'New South Wales') %>%
   mutate(SSC_NAME_2016 = str_trim(str_remove(SSC_NAME_2016, b_pattern))) %>%
   select(SSC_CODE_2016, SSC_NAME_2016, STATE_NAME_2016) %>%
-  distinct() %>%
-  dplyr::distinct(ss, .keep_all = TRUE)  %>%
+  dplyr::distinct() %>%
+  dplyr::distinct(SSC_CODE_2016, .keep_all = TRUE)  %>%
   arrange(SSC_CODE_2016)
 
 # Income distress by suburb
-income_2016 = read_csv("clustering_fy/Data/census_data/2016_Household_income.csv")[, c(1, 4:5)]
-colnames(income_2016) = c("ss", "low_income", "high_income")
+income_2016 = read_csv("clustering_fy/Data/census_data/2016_Household_income.csv")[, c(1, 4:6)]
+colnames(income_2016) = c("ss", "low_income", "high_income", "SSC_CODE")
 income_2016 = income_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Income by suburb
-income2_2016 = read_csv("clustering_fy/Data/census_data/2016_Median_weekly_incomes.csv")[, c(1:4)]
-colnames(income2_2016) = c("ss", "p_income", "f_income", "h_income")
+income2_2016 = read_csv("clustering_fy/Data/census_data/2016_Median_weekly_incomes.csv")[, c(1:4, 8)]
+colnames(income2_2016) = c("ss", "p_income", "f_income", "h_income", "SSC_CODE")
 income2_2016 = income2_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Mortgage by suburb
-mortgage_2016 = read_csv("clustering_fy/Data/census_data/2016_Mortgage_monthly_repayments.csv")[, c(1, 2, 7)]
-colnames(mortgage_2016) = c("ss", "repay", "repay_distress")
+mortgage_2016 = read_csv("clustering_fy/Data/census_data/2016_Mortgage_monthly_repayments.csv")[, c(1, 2, 7, 8)]
+colnames(mortgage_2016) = c("ss", "repay", "repay_distress", "SSC_CODE")
 mortgage_2016 = mortgage_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Language by suburb
 language_top_responses_2016 = read_csv("clustering_fy/Data/census_data/2016_Language_top_responses5.csv")
 language_2016 = language_top_responses_2016 %>%
   mutate(ss = str_trim(str_remove(X1, b_pattern))) %>%
-  select(ss, Mandarin, `Mandarin (%)`, Cantonese, `Cantonese (%)`) %>%
-  mutate(chinese_a = replace_na(Mandarin, 0) + replace_na(Cantonese, 0)) %>%
+  select(ss, Mandarin, `Mandarin (%)`, Cantonese, `Cantonese (%)`, 
+         `English only spoken at home`, `Households where a non English language is spoken`,
+         SSC_CODE) %>%
+  mutate(chinese_a = replace_na(Mandarin, 0) + replace_na(Cantonese, 0),
+         english_only_n = `English only spoken at home`,
+         non_english_n = `Households where a non English language is spoken`) %>%
   mutate(chinese_p = replace_na(`Mandarin (%)`, 0)+replace_na(`Cantonese (%)`, 0)) %>%
   mutate(all_p = round(chinese_a*100/chinese_p, 0)) %>%
-  select(ss, chinese_p) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  select(ss, chinese_p, english_only_n, non_english_n, SSC_CODE) %>%
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Tenure by suburb
 tenure_2016 = read_csv("clustering_fy/Data/census_data/2016_Tenure.csv") %>%
-  select(c(1,7:9))
-colnames(tenure_2016) = c("ss", "owner", "mortgage", "rent")
+  select(c(1,7:9), SSC_CODE)
+colnames(tenure_2016) = c("ss", "owner", "mortgage", "rent", "SSC_CODE")
 tenure_2016 = tenure_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Rent by suburb
 rent_2016 = read_csv("clustering_fy/Data/census_data/2016_Rent_weekly_payments.csv") %>%
-  select(c(1, 2, 7))
-colnames(rent_2016) = c("ss", "rental", "rent_distress")
+  select(c(1, 2, 7), SSC_CODE)
+colnames(rent_2016) = c("ss", "rental", "rent_distress", "SSC_CODE")
 rent_2016 = rent_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # Dwelling structure by suburb
 dw_2016 = read_csv("clustering_fy/Data/census_data/2016_Occupied_private_dwellings.csv") %>%
-  select(c(1, 6:8))
-colnames(dw_2016) = c("ss", "house", "semi", "unit")
+  select(c(1, 6:8), SSC_CODE)
+colnames(dw_2016) = c("ss", "house", "semi", "unit", "SSC_CODE")
 dw_2016 = dw_2016 %>%
   mutate(ss = str_trim(str_remove(ss, b_pattern))) %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
-
-dw_2016 %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
 
 # SSC to POA
 ssc_poa = read_csv("clustering_fy/Data/POA to SSC mapping.csv") %>%
-  select(POA_CODE_2016, SSC_CODE_2016)
+  select(POA_CODE_2016, SSC_CODE_2016, n_MB_CODE_2016)
 
 # SSC mapping
 ssc = read_csv("clustering_fy/Data/SSC_final.csv") %>%
   left_join(ssc_poa, by = "SSC_CODE_2016") %>%
-  mutate(ss=SSC_2006_NAME, ssc=SSC_CODE_2016) %>%
+  mutate(ss=SSC_2006_NAME, SSC_CODE=SSC_CODE_2016) %>%
   filter(!is.na(POA_CODE_2016)) %>%
-  select(ss, ssc, POA_CODE_2016)
+  select(ss, SSC_CODE, POA_CODE_2016, n_MB_CODE_2016)
 
 # COVID input
 covid = read_csv("clustering_fy/Data/confirmed_cases_table4_location_likely_source.csv") %>%
@@ -110,15 +111,42 @@ covid = read_csv("clustering_fy/Data/confirmed_cases_table4_location_likely_sour
   select(notification_date, postcode, lga_name19)
 
 # Suburb data together
-all_table = income_2016 %>%
-  inner_join(income2_2016, by = 'ss') %>%
-  inner_join(language_2016, by = "ss") %>%
-  inner_join(tenure_2016, by = "ss") %>%
-  inner_join(rent_2016, by = "ss") %>%
-  inner_join(mortgage_2016, by = "ss") %>%
-  inner_join(dw_2016, by = "ss") %>%
-  inner_join(ssc, by = "ss") %>%
-  dplyr::distinct(ss, .keep_all = TRUE)
+all_table_raw = income_2016 %>%
+  inner_join(income2_2016 %>% select(-ss), by = 'SSC_CODE') %>%
+  inner_join(language_2016 %>% select(-ss), by = "SSC_CODE") %>%
+  inner_join(tenure_2016 %>% select(-ss), by = "SSC_CODE") %>%
+  inner_join(rent_2016 %>% select(-ss), by = "SSC_CODE") %>%
+  inner_join(mortgage_2016 %>% select(-ss), by = "SSC_CODE") %>%
+  inner_join(dw_2016 %>% select(-ss), by = "SSC_CODE") %>%
+  inner_join(ssc %>% select(-ss), by = "SSC_CODE") %>%
+  filter(!is.na(SSC_CODE)) %>%
+  dplyr::distinct(SSC_CODE, .keep_all = TRUE)
+
+helper_weighted_avg = function(feature) {
+  return(sum(feature * n_MB_CODE_2016)/sum(n_MB_CODE_2016))
+}
+
+all_table = all_table_raw %>%
+  select(-c(ss, SSC_CODE)) %>%
+  group_by(POA_CODE_2016) %>%
+  summarise(low_income = sum(low_income * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            high_income = sum(high_income * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            p_income = sum(p_income),
+            f_income = sum(f_income),
+            h_income = sum(h_income),
+            chinese_p = sum(chinese_p * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            owner = sum(owner * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            rent = sum(rent * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            rental = sum(rental * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            rent_distress = sum(rent_distress * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            repay = sum(repay * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            repay_distress = sum(repay_distress * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            house = sum(house * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            semi = sum(semi * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            unit = sum(unit * n_MB_CODE_2016)/sum(n_MB_CODE_2016))
+  
+
+readr::write_csv(all_table, "clustering_fy/Data/census_feature.csv")
 
 # Suburbs with cluster
 all_table_cluster = bind_cols(all_table, all_table %>%
