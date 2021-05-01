@@ -296,6 +296,41 @@ SYD_POA_gravity_census <-
   filter(source != target) %>% 
   mutate(gravity = replace_na(gravity, 0))
 
+# ----------------gravity added as feature in clustering--------------
+combined_feature_by_POA <- SYD_POA_gravity %>% 
+  group_by(source) %>% 
+  summarise(gravity = sum(gravity)) %>% 
+  mutate(POA_CODE_2016 = as.numeric(source)) %>% 
+  right_join(census_feature_by_POA, by="POA_CODE_2016") %>% 
+  filter(!is.na(gravity)) %>% 
+  select(-source) %>% 
+  relocate(POA_CODE_2016)
+
+combined_clusters <- bind_cols(
+  combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
+    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+  combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
+    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+) %>% 
+  as_tibble() %>% 
+  `colnames<-`(c("kcluster", "hcluster")) %>% 
+  bind_cols(combined_feature_by_POA[,1]) %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  select(POA_NAME16, kcluster, hcluster)
+
+# ----------------Cluster based on gravity only
+gravity_clusters <- bind_cols(
+  combined_feature_by_POA[,2] %>% 
+    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+  combined_feature_by_POA[,2] %>% 
+    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+) %>% 
+  as_tibble() %>% 
+  `colnames<-`(c("kcluster", "hcluster")) %>% 
+  bind_cols(combined_feature_by_POA[,1]) %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  select(POA_NAME16, kcluster, hcluster)
+
 # ----------------mapping between POA and SSC-------------------------
 ## SSC is MORE granular than POA, so one POA will contain multiple SSC
 ## Used by `` function in `R_functions.R`
@@ -405,7 +440,14 @@ check_avoided_cases <- function(case_df = baseline_cases,
   # n_CLUSTER_case_within14days > 0
 }
 
-check_avoided_cases()
+# check_avoided_cases() %>% mean
+# check_avoided_cases(case_df = baseline_cases %>% 
+#                       select(postcode, notification_date, case), 
+#                     cluster_df = confirmed_cases %>% 
+#                       mutate(POA_NAME16 = as.character(postcode)) %>% 
+#                       distinct(POA_NAME16, lga_name19), 
+#                     cluster_var = "lga_name19") %>% 
+#   mean()
 
 # covid_cluster <- baseline_cases %>%
 #   mutate(POA_NAME16 = as.character(postcode)) %>%

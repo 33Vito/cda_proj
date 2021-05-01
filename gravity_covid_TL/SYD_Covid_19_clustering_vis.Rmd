@@ -161,7 +161,7 @@ baseline_cases %>%
 ```
 
 
-# Gravity cluster 
+# Gravity Top X Rule 
 
 ```{r, fig.height=5.3, fig.width=8}
 SYD_POA_gravity %>% 
@@ -263,11 +263,127 @@ SYD_POA_gravity_census %>%
   ggl(base_size=14)
 ```
 
+# Gravity cluster
+
+```{r, fig.height=6, fig.width=8}
+
+baseline_cases %>% 
+  mutate(avoided_by_census_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = census_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_census_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = census_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  mutate(avoided_by_conbimed_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_conbimed_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  mutate(avoided_by_gravity_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = gravity_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_gravity_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = gravity_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  
+  summarise(across(contains("avoided"), mean)) %>% 
+  gather() %>% 
+  mutate(key = fct_reorder(key, value)) %>% 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+                                      "benchmark", "challenger")) %>% 
+  ggplot(aes(x=key, y=value, fill=fill_var)) + 
+  geom_col() + 
+  geom_text(aes(label = paste0(round(100*value,1), "%")), 
+            col="white", hjust="inward", size=4) + 
+  scale_fill_brewer(palette = "Dark2") +
+  labs(subtitle = "% share of cases avoided by lockdown stragegies") + 
+  ggy(percent, name="") + 
+  xlab("") + 
+  coord_flip() + 
+  ggl(base_size=14)
+```
+
+```{r, fig.width=10, fig.height=7}
+combined_feature_by_POA %>% 
+  mutate(gravity = round(gravity)) %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, gravity)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "gravity", 
+           "Total gravity by POA_NAME16 (SYD)", 
+           border_size = .3, show_count = F)
+```
+
+```{r, fig.height=6, fig.width=8}
+
+baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)) %>% 
+  mutate(avoided_by_census_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = census_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_census_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = census_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  mutate(avoided_by_conbimed_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_conbimed_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  mutate(avoided_by_gravity_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = gravity_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_gravity_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases %>% 
+  filter(notification_date >= ymd(20200701), 
+         notification_date <= ymd(20201001)), 
+                               cluster_df = gravity_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  
+  summarise(across(contains("avoided"), mean)) %>% 
+  gather() %>% 
+  mutate(key = fct_reorder(key, value)) %>% 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+                                      "benchmark", "challenger")) %>% 
+  ggplot(aes(x=key, y=value, fill=fill_var)) + 
+  geom_col() + 
+  geom_text(aes(label = paste0(round(100*value,1), "%")), 
+            col="white", hjust="inward", size=4) + 
+  scale_fill_brewer(palette = "Dark2") +
+  labs(subtitle = "% share of cases avoided by lockdown stragegies \n(Western SYD cluster july to Oct, 2020)") + 
+  ggy(percent, name="") + 
+  xlab("") + 
+  coord_flip() + 
+  ggl(base_size=14)
+```
+
 # Gravity & Cluster hybrid
 
 cheating...
 
-```{r, fig.height=5.5, fig.width=8}
+```{r, fig.height=5.8, fig.width=8}
 SYD_POA_gravity %>% 
   group_by(source) %>% 
   slice_max(gravity, n = 5, with_ties=FALSE) %>% 
@@ -290,16 +406,25 @@ SYD_POA_gravity %>%
   )) %>% 
   # summarise(mean(avoided_by_gravity_lockdown))
   
-  mutate(avoided_by_kcluster_lockdown = 
+  mutate(avoided_by_census_kcluster_lockdown = 
            check_avoided_cases(case_df = baseline_cases, 
                                cluster_df = census_clusters, 
                                cluster_var = "kcluster")) %>% 
-  mutate(avoided_by_hcluster_lockdown = 
+  mutate(avoided_by_census_hcluster_lockdown = 
            check_avoided_cases(case_df = baseline_cases, 
                                cluster_df = census_clusters, 
                                cluster_var = "hcluster")) %>% 
   
-  mutate(avoided_by_hybrid_lockdown = avoided_by_gravity_lockdown | avoided_by_kcluster_lockdown | avoided_by_hcluster_lockdown) %>% 
+  mutate(avoided_by_conbimed_kcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "kcluster")) %>% 
+  mutate(avoided_by_conbimed_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  
+  mutate(avoided_by_hybrid_lockdown = avoided_by_gravity_lockdown | avoided_by_census_kcluster_lockdown | avoided_by_census_hcluster_lockdown) %>% 
   
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
