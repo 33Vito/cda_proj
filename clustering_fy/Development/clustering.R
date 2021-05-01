@@ -135,6 +135,8 @@ all_table = all_table_raw %>%
             f_income = sum(f_income),
             h_income = sum(h_income),
             chinese_p = sum(chinese_p * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
+            english_only_n = sum(english_only_n),
+            non_english_n = sum(non_english_n),
             owner = sum(owner * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
             rent = sum(rent * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
             rental = sum(rental * n_MB_CODE_2016)/sum(n_MB_CODE_2016),
@@ -146,23 +148,18 @@ all_table = all_table_raw %>%
             unit = sum(unit * n_MB_CODE_2016)/sum(n_MB_CODE_2016))
   
 
-readr::write_csv(all_table, "clustering_fy/Data/census_feature.csv")
+readr::write_csv(all_table, "clustering_fy/Data/census_feature_by_POA.csv")
 
 # Suburbs with cluster
-all_table_cluster = bind_cols(all_table, all_table %>%
-  select(-c("ss", "ssc", "POA_CODE_2016")) %>%
-  helper_pc_convert() %>%
-  helper_clustering() %>%
-  select(cluster))
 
-all_table_h_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_table %>%
-                                select(-c("ss", "ssc", "POA_CODE_2016")) %>%
+all_table_h_cluster = bind_cols(all_table %>% select(POA_CODE_2016), all_table %>%
+                                  select(-c("POA_CODE_2016")) %>%
                                 helper_pc_convert() %>%
                                 helper_h_clustering(k=6) %>%
                                 select(cluster))
 
-all_table_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_table %>%
-                                  select(-c("ss", "ssc", "POA_CODE_2016")) %>%
+all_table_cluster = bind_cols(all_table %>% select(POA_CODE_2016), all_table %>%
+                                select(-c("POA_CODE_2016")) %>%
                                   helper_pc_convert() %>%
                                   helper_clustering(k=6) %>%
                                   select(cluster))
@@ -170,8 +167,6 @@ all_table_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_
 # Base scenario - assume government locks down neighbourhood suburbs
 
 # Import shape file
-suburbs = readOGR("clustering_fy/Data/shape_file/SSC_2016_AUST.shp")
-
 suburbs = readRDS("gravity_covid_TL/data/SYD_POA.rds")
 ss_col = suburbs$POA_NAME16
 ss_adj = gTouches(suburbs, byid = T)
