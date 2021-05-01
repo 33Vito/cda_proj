@@ -318,7 +318,7 @@ combined_clusters <- bind_cols(
   mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
   select(POA_NAME16, kcluster, hcluster)
 
-# ----------------Cluster based on gravity only
+# ----------------Cluster based on gravity only------------------
 gravity_clusters <- bind_cols(
   combined_feature_by_POA[,2] %>% 
     helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 

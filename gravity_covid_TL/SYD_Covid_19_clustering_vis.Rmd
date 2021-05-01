@@ -313,11 +313,37 @@ baseline_cases %>%
 ```{r, fig.width=10, fig.height=7}
 combined_feature_by_POA %>% 
   mutate(gravity = round(gravity)) %>% 
+  mutate(gravity = ifelse( POA_CODE_2016 == 2000, gravity/2, gravity)) %>% 
   mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
   mutate(POA_NAME16 = fct_reorder(POA_NAME16, gravity)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "gravity", 
            "Total gravity by POA_NAME16 (SYD)", 
            border_size = .3, show_count = F)
+```
+
+```{r, fig.width=10, fig.height=7}
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  mutate(POA_NAME16 = as.character(postcode)) %>% 
+  left_join(
+    gravity_clusters
+    # bind_cols(
+    #   combined_feature_by_POA[,2] %>% 
+    #     helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+    #   combined_feature_by_POA[,2] %>% 
+    #     helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+    # ) %>% 
+    #   as_tibble() %>% 
+    #   `colnames<-`(c("kcluster", "hcluster")) %>% 
+    #   bind_cols(combined_feature_by_POA[,1]) %>% 
+    #   mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+    #   select(POA_NAME16, kcluster, hcluster) 
+            , by=c("POA_NAME16"="POA_NAME16")) %>%
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
+  plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "hcluster",
+                     "Total Covid-19 cases by POA (SYD), highlighted by gravity cluster",
+                     show_count = T, label_size = 2)
 ```
 
 ```{r, fig.height=6, fig.width=8}
