@@ -1,5 +1,21 @@
 source("R_functions.R")
 
+# --------------import cluster from FY -----------------------------
+
+census_feature_by_POA <- read_csv("data/census_feature_by_POA.csv")
+
+census_clusters <- bind_cols(
+  census_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
+    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+  census_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
+    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+) %>% 
+  as_tibble() %>% 
+  `colnames<-`(c("kcluster", "hcluster")) %>% 
+  bind_cols(census_feature_by_POA[,1]) %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  select(POA_NAME16, kcluster, hcluster)
+
 # -------------SYD confirmed cases by postcode----------------
 # confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
 confirmed_cases <- read_csv(
@@ -88,7 +104,8 @@ n_poi_by_POA <- list(
                            SYD_metro[,3:4]), SYD_POA, "n_publicTransports")
 ) %>% reduce(full_join, by="POA_NAME16") %>% 
   mutate(POA_NAME16 = ifelse(is.na(POA_NAME16), "Unknown", POA_NAME16)) %>% 
-  map_dfc(replace_na, replace=0)
+  map_dfc(replace_na, replace=0) %>% 
+  arrange(POA_NAME16)
 
 n_poi_by_POA <- n_poi_by_POA %>% 
   mutate(across(starts_with("n_"), function(x) (x - min(x))/(max(x)-min(x)), 
@@ -121,7 +138,8 @@ SYD_POA_dist <- map_dfr(SYD_POA$POA_NAME16,
                                    target = target_POA_NAME16)
                           }) %>% 
   # distinct(source, target, dist) %>% 
-  filter(source != target)
+  filter(source != target) %>% 
+  arrange(source, target)
 
 # -----------------Travel distance matrix----------------------------------
 
@@ -206,7 +224,6 @@ SYD_POA_mapdist <- read_csv(
 )
 
 # -----------------Gravity calculation--------------------------------
-
 gravity_to_cluster_by_POA <- bind_rows(
 list(target_key = c("2026", "2145", "2107"), 
      mass_var = c("n_hospitals", "n_schools", "n_supermarkets", 
@@ -232,6 +249,52 @@ list(target_key = c("2026", "2145", "2107"),
 
 # write_csv(gravity_to_cluster_by_POA, 
 #           "./data/calculated_measures/calculated gravity from 2026 2145 2107 by POA.csv")
+
+# ----------------Pairwise gravity based on POI----------------------
+n_poi_by_POA_mass <- n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  select(contains("normalised"))
+
+SYD_POA_gravity <-
+  (
+  as.matrix(n_poi_by_POA_mass) %*% t(n_poi_by_POA_mass) # dot product of mass
+  /
+  as.matrix(SYD_POA_dist %>% 
+              filter(source %in% n_poi_by_POA$POA_NAME16, 
+                     target %in% n_poi_by_POA$POA_NAME16) %>% 
+              spread(target, dist, fill=0) %>% 
+              select(-source)) # distance matrix
+  ) %>% as_tibble() %>% 
+    mutate(source = head(n_poi_by_POA$POA_NAME16,-1)) %>% 
+  gather(target, gravity, -source) %>% 
+  filter(source != target)
+
+# ----------------Pairwise gravity based on POI & census data----------------------
+n_poi_by_POA_census_mass <- n_poi_by_POA %>% 
+  filter(POA_NAME16 != "Unknown") %>% 
+  select(POA_NAME16, contains("normalised")) %>% 
+  left_join(
+    census_feature_by_POA %>% 
+      filter(!is.na(POA_CODE_2016)) %>% 
+      mutate(POA_CODE_2016 = as.character(POA_CODE_2016)) %>% 
+      mutate(across(-POA_CODE_2016, function(x) (x-min(x))/(max(x)-min(x))))
+  , by = c("POA_NAME16"="POA_CODE_2016")) %>% 
+  select(-POA_NAME16)
+
+SYD_POA_gravity_census <-
+  (
+    as.matrix(n_poi_by_POA_census_mass) %*% t(n_poi_by_POA_census_mass) # dot product of mass
+    /
+      as.matrix(SYD_POA_dist %>% 
+                  filter(source %in% n_poi_by_POA$POA_NAME16, 
+                         target %in% n_poi_by_POA$POA_NAME16) %>% 
+                  spread(target, dist, fill=0) %>% 
+                  select(-source)) # distance matrix
+  ) %>% as_tibble() %>% 
+  mutate(source = head(n_poi_by_POA$POA_NAME16,-1)) %>% 
+  gather(target, gravity, -source) %>% 
+  filter(source != target) %>% 
+  mutate(gravity = replace_na(gravity, 0))
 
 # ----------------mapping between POA and SSC-------------------------
 ## SSC is MORE granular than POA, so one POA will contain multiple SSC
@@ -288,7 +351,7 @@ baseline_cases <- confirmed_cases %>%
         filter(notification_date < x, 
                notification_date >= x - 14) %>% 
         filter(postcode %in% y) %>% 
-        count() %>% pull(n) -> n_adjacent_case_within14days
+        nrow(.) -> n_adjacent_case_within14days
       n_adjacent_case_within14days > 0
     }
   )) %>% 
@@ -299,7 +362,7 @@ mutate(avoided_by_lga_lockdown = map2_lgl(
       filter(notification_date < x, 
              notification_date >= x - 14) %>% 
       filter(lga_name19 == y) %>% 
-      count() %>% pull(n) -> n_lga_case_within14days
+      nrow(.) -> n_lga_case_within14days
     n_lga_case_within14days > 0
   }
 )) %>% 
@@ -310,16 +373,52 @@ mutate(avoided_by_lhd_lockdown = map2_lgl(
       filter(notification_date < x, 
              notification_date >= x - 14) %>% 
       filter(lhd_2010_name == y) %>% 
-      count() %>% pull(n) -> n_lhd_case_within14days
+      nrow(.) -> n_lhd_case_within14days
     n_lhd_case_within14days > 0
   }
 ))
-  
-# --------------import cluster from FY -----------------------------
 
+# ----function to produce avoid_indc by left_join------------------------
+# save this function here to allow context to understand what it does-------
+check_avoided_cases <- function(case_df = baseline_cases, 
+                                cluster_df = census_clusters, 
+                                cluster_var = "kcluster") {
+  
+  predicted_cases <- case_df %>% 
+    left_join(cluster_df, by=c("postcode"="POA_NAME16")) %>% 
+    filter(!is.na(.data[[cluster_var]])) %>% 
+    left_join(.,., by=cluster_var) %>% 
+    filter(notification_date.y - notification_date.x <= 14,
+           notification_date.y - notification_date.x > 0) %>%
+    distinct(case.y) %>% pull(case.y)
+  
+  return(case_df$case %in% predicted_cases)
+    
+  # browser()
+  # confirmed_cases %>% 
+  #   mutate(POA_NAME16 = as.character(postcode)) %>% 
+  #   left_join(cluster_df, by="POA_NAME16") %>% 
+  #   filter(notification_date < DATE.x, 
+  #          notification_date >= DATE.x - 14) %>% 
+  #   filter({{ cluster_var }} == CLUSTER.y) %>% 
+  #   nrow(.) -> n_CLUSTER_case_within14days
+  # n_CLUSTER_case_within14days > 0
+}
 
-  
-  
+check_avoided_cases()
+
+# covid_cluster <- baseline_cases %>%
+#   mutate(POA_NAME16 = as.character(postcode)) %>%
+#   left_join(census_clusters, by="POA_NAME16") %>% 
+#   filter(!is.na(census_kcluster)) %>%
+#   select(notification_date, POA_NAME16, case, census_kcluster)
+#   
+# covid_cluster %>% 
+#   left_join(covid_cluster, by = "census_kcluster") %>% 
+#   filter(notification_date.y - notification_date.x <= 14,
+#          notification_date.y - notification_date.x > 0) %>%
+#   distinct(case.y) %>% 
+#   summarise(nrow(.)/nrow(confirmed_cases))
   
   
   

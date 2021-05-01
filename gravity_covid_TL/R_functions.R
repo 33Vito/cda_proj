@@ -1,5 +1,6 @@
 source("utility.R")
 library(sp)
+library(psych)
 
 #-----------------------------Function to plot choropleth map-----------------------------
 plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,  
