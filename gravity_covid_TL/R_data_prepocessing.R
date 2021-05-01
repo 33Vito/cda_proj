@@ -254,6 +254,88 @@ POA_to_SSC_mapping <- POA_2016_SYD %>%
 # write_csv(POA_to_SSC_mapping,
 #           "./data/calculated_measures/POA to SSC mapping.csv")
 
+# ---------------Adjacent postcode of each POA (shared boundries)--------------------
+
+library(rgeos)
+SYD_POA_link <- gTouches(SYD_POA, byid = T) %>% 
+  as_tibble() %>% 
+  `colnames<-`(SYD_POA$POA_NAME16) %>% 
+  mutate(source = SYD_POA$POA_NAME16) %>% 
+  gather(target, link, -source) %>% 
+  filter(link)
+
+SYD_POA_adjacency <- SYD_POA_link[,1:2] %>% 
+  rename(postcode = source) %>% 
+  nest(adjacent_postcode = target) %>% 
+  mutate(adjacent_postcode = map(adjacent_postcode, ~.x[[1]])) %>% 
+  mutate(n_adjacent_postcode = map_dbl(adjacent_postcode, length))
+
+# ----------------Base line cluster and confirmed cases ----------------------
+
+baseline_cases <- confirmed_cases %>%
+  mutate(postcode = as.character(postcode)) %>% 
+  # --------------join adjacent POS------------------
+  left_join(SYD_POA_adjacency, by="postcode") %>% 
+  select(notification_date, postcode, adjacent_postcode, 
+         lga_name19, lhd_2010_name) %>% 
+  # --------------------------------------------
+  arrange(notification_date, postcode) %>% 
+  mutate(case = 1:nrow(.)) %>% 
+  # ----add indicator of cases avoided by adjacent POA cases within 14 days----
+  mutate(avoided_by_adjacent_lockdown = map2_lgl(
+    notification_date, adjacent_postcode, function(x, y) {
+      confirmed_cases %>% 
+        filter(notification_date < x, 
+               notification_date >= x - 14) %>% 
+        filter(postcode %in% y) %>% 
+        count() %>% pull(n) -> n_adjacent_case_within14days
+      n_adjacent_case_within14days > 0
+    }
+  )) %>% 
+  # ---add indicator of cases avoided by LGA cases within 14 days------
+mutate(avoided_by_lga_lockdown = map2_lgl(
+  notification_date, lga_name19, function(x, y) {
+    confirmed_cases %>% 
+      filter(notification_date < x, 
+             notification_date >= x - 14) %>% 
+      filter(lga_name19 == y) %>% 
+      count() %>% pull(n) -> n_lga_case_within14days
+    n_lga_case_within14days > 0
+  }
+)) %>% 
+# ---add indicator of cases avoided by LHD cases within 14 days------
+mutate(avoided_by_lhd_lockdown = map2_lgl(
+  notification_date, lhd_2010_name, function(x, y) {
+    confirmed_cases %>% 
+      filter(notification_date < x, 
+             notification_date >= x - 14) %>% 
+      filter(lhd_2010_name == y) %>% 
+      count() %>% pull(n) -> n_lhd_case_within14days
+    n_lhd_case_within14days > 0
+  }
+))
+  
+# --------------import cluster from FY -----------------------------
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
 
 
 

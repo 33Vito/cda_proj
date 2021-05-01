@@ -32,6 +32,86 @@ source("R_functions.R")
 source("R_data_prepocessing.R")
 ```
 
+# Base line
+## Adjacent POA lockdown
+
+```{r, fig.width=9.5, fig.height=4.3}
+grid.arrange(
+data.frame(POA_NAME16 = "2145", Total_cases = 25) %>% 
+  bind_rows(SYD_POA_link %>% 
+              filter(target == "2145") %>% 
+              select(-target) %>% 
+              rename(POA_NAME16 = source) %>% 
+              # mutate(Total_cases = 0)
+              mutate(Total_cases = round(runif(nrow(.),1,10)))
+            ) %>%
+  bind_rows(data.frame(
+    POA_NAME16 = c("2747", "2155", "2170", "2176"),
+    Total_cases = c(5,8,5,3)
+  )) %>% 
+  plot_map_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
+              "POA_NAME16", "Total_cases",
+              "Simulated outbreak of Covid-19 \nfrom Western Sydney", 
+              show_count = T, label_size = 3.5, return_obj = "map") + 
+  xlim(150.7,151.2) + ylim(-34,-33.6)
+,
+data.frame(POA_NAME16 = "2145", Total_cases = 25) %>% 
+  bind_rows(SYD_POA_link %>% 
+              filter(target == "2145") %>% 
+              select(-target) %>% 
+              rename(POA_NAME16 = source) %>% 
+              # mutate(Total_cases = 0)
+              mutate(Total_cases = round(runif(nrow(.),1,10)))
+            ) %>%
+  mutate(lockdown_status = "Lockdown") %>% 
+  # mutate(lockdown = ifelse(POA_NAME16 == VIRUS_ORIGIN,))
+  plot_map_factor_TL(rmapshaper::ms_simplify(SYD_POA, .01), 
+              "POA_NAME16", "Total_cases", "lockdown_status", 
+              "Base line lockdown strategy \n(surrounding postal areas)", 
+              na_factor = "No lockdown", map_lp = c(.15,.13), 
+              show_count = F, label_size = 3.5, return_obj = "map") + 
+  # theme_classic()
+  xlim(150.7,151.2) + ylim(-34,-33.6)
+, ncol=2)
+```
+
+## LGA lockdown
+
+```{r, fig.width=10, fig.height=7}
+confirmed_cases %>% 
+  filter(lga_name19 %in% SYD_LGA$LGA_NAME19) %>% 
+  count(lga_name19, name="Total_cases") %>% 
+  rename(LGA_NAME19 = lga_name19) %>% 
+  mutate(LGA_NAME19 = fct_reorder(LGA_NAME19, Total_cases)) %>% 
+  plot_map_TL(SYD_LGA, "LGA_NAME19", "Total_cases", 
+           "Total Covid-19 cases by LGA (SYD)", 
+           border_size = .3, show_count = T)
+```
+## LHD lockdown
+
+![](img/SYD_lhd_map.PNG)
+
+[Sourced from https://www.health.nsw.gov.au/lhd/Documents/lhd-wall-map.pdf](https://www.health.nsw.gov.au/lhd/Documents/lhd-wall-map.pdf)
+
+## Effectiveness
+
+Key assumption: Areas under lock-down would __NOT__ incur new Covid-19 cases in the 14 days following the first outbreak. This is just a vehicle to compare the effectiveness of different lock-down strategies - we can relax the assumtion to e.g. 50% of the cases in the 14 days following the first outbreak can be avoided. 
+
+```{r, fig.height=3, fig.width=6}
+baseline_cases %>% 
+  summarise(across(contains("avoided"), mean)) %>% 
+  gather() %>% 
+  ggplot(aes(x=key, y=value)) + 
+  geom_col() + 
+  geom_text(aes(label = paste0(round(100*value), "%")), 
+            col="white", hjust="inward") + 
+  labs(subtitle = "% share of cases avoided by \nbaseline lockdown stragegies") + 
+  ggy(percent, name="") + 
+  xlab("") + 
+  coord_flip() + 
+  ggl(base_size=14)
+```
+
 # Gravity only 
 
 ```{r, fig.width=9.5, fig.height=7}
@@ -88,7 +168,7 @@ confirmed_cases %>%
   summarise(Total_cases = sum(Total_cases)) %>% 
   mutate(cluster = fct_reorder(cluster, Total_cases)) %>% 
   
-  ggplot(aes(x=cluster, y=Total_cases)) + 
+  ggplot(aes(x=cluster, y=Total_cases, fill=cluster)) + 
   geom_col() + 
-  ggl()
+  ggl("none")
 ```
