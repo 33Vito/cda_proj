@@ -130,19 +130,27 @@ all_table_cluster = bind_cols(all_table, all_table %>%
 all_table_h_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_table %>%
                                 select(-c("ss", "ssc", "POA_CODE_2016")) %>%
                                 helper_pc_convert() %>%
-                                helper_h_clustering() %>%
+                                helper_h_clustering(k=6) %>%
                                 select(cluster))
 
 all_table_cluster = bind_cols(all_table %>% select(ss, ssc, POA_CODE_2016), all_table %>%
                                   select(-c("ss", "ssc", "POA_CODE_2016")) %>%
                                   helper_pc_convert() %>%
-                                  helper_clustering() %>%
+                                  helper_clustering(k=6) %>%
                                   select(cluster))
 
 # Base scenario - assume government locks down neighbourhood suburbs
 
 # Import shape file
 suburbs = readOGR("clustering_fy/Data/shape_file/SSC_2016_AUST.shp")
+
+suburbs = readRDS("gravity_covid_TL/data/SYD_POA.rds")
+ss_col = suburbs$POA_NAME16
+ss_adj = gTouches(suburbs, byid = T)
+colnames(ss_adj) = ss_col
+rownames(ss_adj) = ss_col
+link = as.data.frame(as.table(ss_adj))
+
 
 # Only relevant suburbs included
 suburbs2 = subset(suburbs, suburbs$SSC_CODE16 %in% SSC_2016_AUST$SSC_CODE_2016)
@@ -154,7 +162,8 @@ colnames(ss_adj) = ss_col
 rownames(ss_adj) = ss_col
 
 # Convert contingency table into relationship table
-link = as.data.frame(as.table(ss_adj))
+adj_suburb = as.data.frame(as.table(ss_adj))%>%
+  filter(Freq==T)
 colnames(link)
 
 
@@ -174,8 +183,9 @@ adj_suburb_key = adj_suburb %>%
   bind_cols(data.frame(cluster=1:nrow(adj_suburb)))
 
 # Form base scenario detection table
-base_cluster = bind_rows(select(adj_suburb_key %>% mutate(POA_CODE_2016 = POA1), POA_CODE_2016, cluster), 
-                         select(adj_suburb_key %>% mutate(POA_CODE_2016 = POA2), POA_CODE_2016, cluster))
+base_cluster = bind_rows(select(adj_suburb_key %>% mutate(POA_CODE_2016 = Var1), POA_CODE_2016, cluster), 
+                         select(adj_suburb_key %>% mutate(POA_CODE_2016 = Var2), POA_CODE_2016, cluster)) %>%
+  mutate(POA_CODE_2016 = as.numeric(as.character(POA_CODE_2016)))
 
 helper_effective(base_cluster, lockdon_n = 14)
 helper_effective(all_table_h_cluster, lockdon_n = 14)

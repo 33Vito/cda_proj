@@ -11,8 +11,8 @@ helper_pc_convert = function(table, cutoff=0.9) {
 }
 
 # Empirically determine n by setting an average of 8 suburbs per cluster
-helper_clustering = function(table) {
-  n = floor(nrow(table)/8)
+helper_clustering = function(table, k=8) {
+  n = floor(nrow(table)/k)
   k = kmeans(table, n)
   table$cluster = k$cluster
   return(table)
@@ -20,8 +20,8 @@ helper_clustering = function(table) {
 
 # Empirically determine n by setting an average of 8 suburbs per cluster
 # Hierarchical clustering
-helper_h_clustering = function(table) {
-  n = floor(nrow(table)/8)
+helper_h_clustering = function(table, k=8) {
+  n = floor(nrow(table)/k)
   hierar = hclust(dist(table))
   fit = cutree(hierar, k = n)
   table$cluster = fit
@@ -29,7 +29,8 @@ helper_h_clustering = function(table) {
 }
 
 # Calculating effectiveness
-helper_effective = function(cluster_table, lockdon_n=1) {
+helper_effective = function(cluster_table, lockdown_n=14) {
+
 # Link post code
 covid_cluster = covid %>%
   left_join(cluster_table, by = c("postcode"="POA_CODE_2016")) %>%
@@ -43,7 +44,7 @@ covid_cluster =  covid_cluster %>%
 # Identify how many near future cases can be identified from previous clusters
 covid_predicted = covid_cluster %>%
   left_join(covid_cluster, by = "cluster") %>%
-  filter(notification_date.y - notification_date.x <= lockdon_n, notification_date.y - notification_date.x > 0) %>%
+  filter(notification_date.y - notification_date.x <= lockdown_n, notification_date.y - notification_date.x > 0) %>%
   select(c(6, 7, 8, 9, 4)) %>%
   dplyr::distinct() %>%
   arrange(case.y)
