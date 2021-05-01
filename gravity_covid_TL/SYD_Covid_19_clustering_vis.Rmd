@@ -1,0 +1,94 @@
+---
+title: "SYD Covid-19 clustering vis"
+author: "Tony Liu"
+date: "`r Sys.Date()`"
+output:
+  html_notebook:
+    code_folding: hide
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+options(scipen=999, expressions=50000, 
+        DT.options = list(pageLength = 8,
+                          scrollX = TRUE,
+                          dom = 'Bfrtip',
+                          buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), 
+                          autoWidth = TRUE)) 
+
+knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=4)
+knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)
+```
+
+```{r}
+# source("utility.R")
+source("R_functions.R")
+source("R_data_prepocessing.R")
+```
+
+# Gravity only 
+
+```{r, fig.width=9.5, fig.height=7}
+library(psych)
+
+gravity_score_pivoted <- 
+  gravity_to_cluster_by_POA %>% 
+    filter(dist_spec == "radial_distance") %>% 
+    # filter(mass_var %in% c("n_schools", "n_supermarkets", 
+    #                        "n_publicTransports")) %>% 
+    select(mass_var, source, target, gravity) %>% 
+    # mutate(gravity = log(gravity + 0.01)) %>% 
+    pivot_wider(names_from = mass_var, values_from = gravity) %>% 
+    pivot_wider(names_from = target, 
+                values_from = n_hospitals:n_publicTransports) %>% 
+    rename(POA_NAME16 = source)
+
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  mutate(POA_NAME16 = as.character(postcode)) %>%
+  
+  left_join(
+      gravity_score_pivoted[,-1] %>% 
+      helper_pc_convert(.9) %>%
+      helper_clustering() %>%
+      bind_cols(gravity_score_pivoted[,1]) %>%
+      mutate(cluster = as.factor(cluster))
+  , by = "POA_NAME16") %>%
+  mutate(cluster = fct_explicit_na(cluster)) %>%
+  
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>%
+  plot_map_factor_TL(SYD_POA, "POA_NAME16", "Total_cases", "cluster",
+              "Total Covid-19 cases and cluster by POA (SYD)",
+              show_count = T, label_size = 2)
+```
+
+```{r}
+confirmed_cases %>%
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>%
+  count(postcode, name="Total_cases") %>%
+  mutate(POA_NAME16 = as.character(postcode)) %>%
+  
+  left_join(
+      gravity_score_pivoted[,-1] %>% 
+      helper_pc_convert() %>%
+      helper_clustering() %>%
+      bind_cols(gravity_score_pivoted[,1]) %>%
+      mutate(cluster = as.factor(cluster))
+  , by = "POA_NAME16") %>%
+  mutate(cluster = fct_explicit_na(cluster)) %>% 
+  
+  group_by(cluster) %>% 
+  summarise(Total_cases = sum(Total_cases)) %>% 
+  mutate(cluster = fct_reorder(cluster, Total_cases)) %>% 
+  
+  ggplot(aes(x=cluster, y=Total_cases)) + 
+  geom_col() + 
+  ggl()
+```
