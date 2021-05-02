@@ -2,8 +2,9 @@ source("R_functions.R")
 
 # --------------import cluster from FY -----------------------------
 
-census_feature_by_POA <- read_csv("data/census_feature_by_POA.csv")
-
+census_feature_by_POA <- read_csv("data/census_feature_by_POA_imputed_v2.csv")
+  
+set.seed(123)
 census_clusters <- bind_cols(
   census_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
     helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
@@ -20,6 +21,7 @@ census_clusters <- bind_cols(
 # confirmed_cases <- read_csv("data/confirmed_cases_table1_location.csv")
 confirmed_cases <- read_csv(
   "data/confirmed_cases_table4_location_likely_source.csv") %>% 
+  # filter(postcode %in% census_feature_by_POA$POA_CODE_2016) %>%
   filter(str_detect(likely_source_of_infection, "Locally")) %>% 
   select(-likely_source_of_infection)
 
@@ -368,6 +370,24 @@ SYD_POA_adjacency <- SYD_POA_link[,1:2] %>%
   mutate(adjacent_postcode = map(adjacent_postcode, ~.x[[1]])) %>% 
   mutate(n_adjacent_postcode = map_dbl(adjacent_postcode, length))
 
+## Imputed another time for un-adjacent POA
+# census_feature_by_POA_inputed_v2 <- SYD_POA_adjacency %>% 
+#   select(-n_adjacent_postcode) %>% 
+#   mutate(POA_CODE_2016 = as.numeric(postcode)) %>% 
+#   left_join(census_feature_by_POA, by="POA_CODE_2016") %>% 
+#   filter(is.na(low_income )) %>% 
+#   select(postcode:POA_CODE_2016) %>% 
+#   unnest(adjacent_postcode) %>% 
+#   mutate(adjacent_postcode = as.numeric(adjacent_postcode)) %>% 
+#   left_join(census_feature_by_POA, 
+#             by=c("adjacent_postcode"="POA_CODE_2016")) %>% 
+#   group_by(POA_CODE_2016) %>% 
+#   summarise(across(low_income:unit, ~mean(.x, na.rm=T)))
+# 
+# bind_rows(census_feature_by_POA, 
+#           census_feature_by_POA_inputed_v2) %>% 
+#   write.csv("data/census_feature_by_POA_imputed_v2.csv")
+
 # ----------------Base line cluster and confirmed cases ----------------------
 
 baseline_cases <- confirmed_cases %>%
@@ -411,19 +431,30 @@ mutate(avoided_by_lhd_lockdown = map2_lgl(
       nrow(.) -> n_lhd_case_within14days
     n_lhd_case_within14days > 0
   }
+)) %>% 
+  # ---add indicator of cases avoided by SYD cases within 14 days------
+mutate(avoided_by_syd_lockdown = map_lgl(
+  notification_date, function(x, y) {
+    confirmed_cases %>% 
+      filter(notification_date < x, 
+             notification_date >= x - 14) %>% 
+      # filter(lhd_2010_name == y) %>% 
+      nrow(.) -> n_syd_case_within14days
+    n_syd_case_within14days > 0
+  }
 ))
 
 # ----function to produce avoid_indc by left_join------------------------
 # save this function here to allow context to understand what it does-------
 check_avoided_cases <- function(case_df = baseline_cases, 
                                 cluster_df = census_clusters, 
-                                cluster_var = "kcluster") {
+                                cluster_var = "kcluster", n=14) {
   
   predicted_cases <- case_df %>% 
     left_join(cluster_df, by=c("postcode"="POA_NAME16")) %>% 
     filter(!is.na(.data[[cluster_var]])) %>% 
     left_join(.,., by=cluster_var) %>% 
-    filter(notification_date.y - notification_date.x <= 14,
+    filter(notification_date.y - notification_date.x <= n,
            notification_date.y - notification_date.x > 0) %>%
     distinct(case.y) %>% pull(case.y)
   
@@ -441,12 +472,13 @@ check_avoided_cases <- function(case_df = baseline_cases,
 }
 
 # check_avoided_cases() %>% mean
-# check_avoided_cases(case_df = baseline_cases %>% 
-#                       select(postcode, notification_date, case), 
-#                     cluster_df = confirmed_cases %>% 
-#                       mutate(POA_NAME16 = as.character(postcode)) %>% 
-#                       distinct(POA_NAME16, lga_name19), 
-#                     cluster_var = "lga_name19") %>% 
+# check_avoided_cases(case_df = baseline_cases %>%
+#                       select(postcode, notification_date, case),
+#                     cluster_df = confirmed_cases %>%
+#                       mutate(POA_NAME16 = as.character(postcode)) %>%
+#                       # mutate(cluster = "syd") %>% 
+#                       distinct(POA_NAME16, lga_name19),
+#                     cluster_var = "lga_name19") %>%
 #   mean()
 
 # covid_cluster <- baseline_cases %>%

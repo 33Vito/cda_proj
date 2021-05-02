@@ -116,7 +116,7 @@ confirmed_cases %>%
 Key assumption: Areas under lock-down would __NOT__ incur new Covid-19 cases in the 14 days following the first outbreak. This is just a vehicle to compare the effectiveness of different lock-down strategies - we can relax the assumtion to e.g. 50% of the cases in the 14 days following the first outbreak can be avoided. 
 
 ```{r, fig.height=3, fig.width=6}
-baseline_cases %>% 
+baseline_cases %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   ggplot(aes(x=key, y=value)) + 
@@ -130,7 +130,26 @@ baseline_cases %>%
   ggl(base_size=14)
 ```
 
-# Census (Homophily) cluster
+```{r, fig.height=3, fig.width=5}
+baseline_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  summarise(n_POA = n_distinct(postcode), 
+            n_lga = n_distinct(lga_name19), 
+            n_lhd = n_distinct(lhd_2010_name)) %>% 
+  gather() %>% 
+  
+  ggplot(aes(x=reorder(key, value), y=value, label=value)) + 
+  geom_col() + 
+  geom_text(col="black", hjust=0, nudge_y = 3) + 
+  coord_flip() + 
+  xlab("") + ylab("") + 
+  ylim(c(0,210)) +
+  labs(subtitle = "Number of elements in the Sydney geography") + 
+  ggl()
+```
+
+# Challenger
+## Census (Homophily) cluster
 
 ```{r, fig.height=5, fig.width=8}
 baseline_cases %>%
@@ -146,7 +165,7 @@ baseline_cases %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   mutate(key = fct_reorder(key, value)) %>% 
-  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent|syd)"), 
                                       "benchmark", "challenger")) %>% 
   ggplot(aes(x=key, y=value, fill=fill_var)) + 
   geom_col() + 
@@ -160,8 +179,16 @@ baseline_cases %>%
   ggl(base_size=14)
 ```
 
+```{r, fig.width=9.5, fig.height=7}
+census_feature_by_POA %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  mutate(POA_NAME16 = fct_reorder(POA_NAME16, high_income)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "high_income", 
+           "high_income by POA (SYD)", 
+           show_count = F, label_size = 2)
+```
 
-# Gravity Top X Rule 
+## Gravity Top X Rule 
 
 ```{r, fig.height=5.3, fig.width=8}
 SYD_POA_gravity %>% 
@@ -198,7 +225,7 @@ SYD_POA_gravity %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   mutate(key = fct_reorder(key, value)) %>% 
-  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent|syd)"), 
                                       "benchmark", "challenger")) %>% 
   ggplot(aes(x=key, y=value, fill=fill_var)) + 
   geom_col() + 
@@ -212,7 +239,7 @@ SYD_POA_gravity %>%
   ggl(base_size=14)
 ```
 
-# Homophily Gravity
+## Homophily Gravity
 
 ```{r, fig.height=5.5, fig.width=8}
 SYD_POA_gravity_census %>% 
@@ -249,7 +276,7 @@ SYD_POA_gravity_census %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   mutate(key = fct_reorder(key, value)) %>% 
-  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent|syd)"), 
                                       "benchmark", "challenger")) %>% 
   ggplot(aes(x=key, y=value, fill=fill_var)) + 
   geom_col() + 
@@ -263,7 +290,7 @@ SYD_POA_gravity_census %>%
   ggl(base_size=14)
 ```
 
-# Gravity cluster
+## Gravity cluster
 
 ```{r, fig.height=6, fig.width=8}
 
@@ -296,7 +323,7 @@ baseline_cases %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   mutate(key = fct_reorder(key, value)) %>% 
-  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent|syd)"), 
                                       "benchmark", "challenger")) %>% 
   ggplot(aes(x=key, y=value, fill=fill_var)) + 
   geom_col() + 
@@ -313,7 +340,7 @@ baseline_cases %>%
 ```{r, fig.width=10, fig.height=7}
 combined_feature_by_POA %>% 
   mutate(gravity = round(gravity)) %>% 
-  mutate(gravity = ifelse( POA_CODE_2016 == 2000, gravity/2, gravity)) %>% 
+  mutate(gravity = ifelse( POA_CODE_2016 == 2000, gravity/1.6, gravity)) %>% 
   mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
   mutate(POA_NAME16 = fct_reorder(POA_NAME16, gravity)) %>% 
   plot_map_TL(SYD_POA, "POA_NAME16", "gravity", 
@@ -405,9 +432,7 @@ baseline_cases %>%
   ggl(base_size=14)
 ```
 
-# Gravity & Cluster hybrid
-
-cheating...
+## Gravity & Cluster hybrid
 
 ```{r, fig.height=5.8, fig.width=8}
 SYD_POA_gravity %>% 
@@ -455,7 +480,7 @@ SYD_POA_gravity %>%
   summarise(across(contains("avoided"), mean)) %>% 
   gather() %>% 
   mutate(key = fct_reorder(key, value)) %>% 
-  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent)"), 
+  mutate(fill_var = ifelse(str_detect(key, "(lhd|lga|adjacent|syd)"), 
                                       "benchmark", "challenger")) %>% 
   ggplot(aes(x=key, y=value, fill=fill_var)) + 
   geom_col() + 
@@ -463,16 +488,105 @@ SYD_POA_gravity %>%
             col="white", hjust="inward", size=4) + 
   scale_fill_brewer(palette = "Dark2") +
   labs(subtitle = "% share of cases avoided by lockdown stragegies") + 
-  ggy(percent, name="") + 
+  ggy(percent, name="") +
   xlab("") + 
   coord_flip() + 
   ggl(base_size=14)
 ```
 
+# Avoided cases mapping
+## Total cases
 
+```{r, fig.width=9.5, fig.height=7}
+confirmed_cases %>% 
+  filter(as.character(postcode) %in% SYD_POA$POA_NAME16) %>% 
+  count(postcode, name="Total_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), Total_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_cases", 
+           "Total Covid-19 cases by POA (SYD)", 
+           show_count = T, label_size = 3)
+```
 
+## lga lockdown
 
+```{r, fig.width=9.5, fig.height=7}
+baseline_cases %>%
+  filter(avoided_by_lga_lockdown) %>% 
+  count(postcode, name="Total_avoided_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), 
+                                  Total_avoided_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_avoided_cases", 
+           "Total avoided cases by adjacent lockdown (SYD)", 
+           show_count = T, label_size = 3, fill_col = "darkgreen")
+```
 
+## adjacent lockdown
+
+```{r, fig.width=9.5, fig.height=7}
+baseline_cases %>%
+  filter(avoided_by_adjacent_lockdown) %>% 
+  count(postcode, name="Total_avoided_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), 
+                                  Total_avoided_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_avoided_cases", 
+           "Total avoided cases by adjacent lockdown (SYD)", 
+           show_count = T, label_size = 3, fill_col = "grey23")
+```
+
+## census hcluster lockdown
+
+```{r, fig.width=9.5, fig.height=7}
+baseline_cases %>%
+  mutate(avoided_by_hcluster_lockdown = 
+           check_avoided_cases(case_df = baseline_cases, 
+                               cluster_df = census_clusters, 
+                               cluster_var = "hcluster")) %>% 
+  filter(avoided_by_hcluster_lockdown) %>% 
+  count(postcode, name="Total_avoided_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), 
+                                  Total_avoided_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_avoided_cases", 
+           "Total avoided cases by census hcluster lockdown (SYD)", 
+           show_count = T, label_size = 3, fill_col = "darkgreen")
+```
+
+## gravity top 5 lockdown
+
+```{r, fig.width=9.5, fig.height=7}
+SYD_POA_gravity %>% 
+  group_by(source) %>% 
+  slice_max(gravity, n = 5, with_ties=FALSE) %>% 
+  select(-gravity) %>% 
+  nest(gravity_postcode = target) %>% 
+  mutate(gravity_postcode = map(gravity_postcode, ~.x[[1]])) %>% 
+  # mutate(n_adjacent_postcode = map_dbl(adjacent_postcode, length))
+  
+  ungroup() %>% 
+  right_join(baseline_cases, by=c("source"="postcode")) %>% 
+  mutate(avoided_by_gravity_lockdown = map2_lgl(
+    notification_date, gravity_postcode, function(x, y) {
+      confirmed_cases %>% 
+        filter(notification_date < x, 
+               notification_date >= x - 14) %>% 
+        filter(postcode %in% y) %>% 
+        nrow(.) -> n_gravity_case_within14days
+      n_gravity_case_within14days > 0
+    }
+  )) %>% 
+  filter(avoided_by_gravity_lockdown) %>% 
+  rename(postcode = source) %>% 
+  count(postcode, name="Total_avoided_cases") %>% 
+  rename(POA_NAME16 = postcode) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), 
+                                  Total_avoided_cases)) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", "Total_avoided_cases", 
+           "Total avoided cases by gravity lockdown (SYD)", 
+           show_count = T, label_size = 3, fill_col = "darkblue")
+```
 
 
 
