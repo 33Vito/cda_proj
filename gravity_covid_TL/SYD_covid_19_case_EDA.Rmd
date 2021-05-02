@@ -237,9 +237,9 @@ confirmed_cases %>%
   geom_line() + 
   geom_text_repel(aes(label=lab), size=4, hjust=-.1, min.segment.length = 10) + 
   # facet_wrap(~lhd_2010_name) + 
-  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by region") + 
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by Local Health District (LHD)") + 
   # xlim(c(0,550)) +
-  ggl(lp = "none") 
+  ggl(base_size=12, lp = "none") 
 ```
 
 ```{r, fig.width=9, fig.height=6}
@@ -265,9 +265,9 @@ confirmed_cases %>%
   geom_line() + 
   geom_text(aes(label=lab), size=3, hjust="outward") + 
   facet_wrap(~lhd_2010_name) +
-  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by postcode") + 
+  labs(subtitle = "Accumulated confirmed Covid-19 cases (SYD), by postcode (POA)") + 
   # xlim(c(0,550)) +
-  ggl(lp = "none", ) + 
+  ggl(base_size=12, lp = "none", ) + 
   theme(strip.text.x = element_text(size = 12))
 ```
 
@@ -379,10 +379,11 @@ confirmed_cases %>%
     SYD_POA[SYD_POA$POA_NAME16 %in% as.character(
       confirmed_cases$postcode) ,], .01), 
               "POA_NAME16", "Accumulated_cases", 
-           "Total accumulated Covid-19 cases by POA (SYD), overtime", 
+           "Total accumulated Covid-19 cases by POA (SYD), by quarter", 
            return_obj="map") + 
   facet_wrap(~facet_var) + 
-  theme_map_facet_TL
+  theme_map_facet_TL + 
+  theme()
 ```
 
 ### Accumulated share
@@ -887,6 +888,30 @@ n_poi_by_POA %>%
               "Number of public transports by POA", 
               show_count = T, fill_col = "darkorange")
 ```
+
+# Census data mapping
+
+```{r, fig.width=8.5, fig.height=10}
+plot_census_map <- function(VAR, COLOR) {
+  census_feature_by_POA %>% 
+  mutate(across(-POA_CODE_2016, ~round(.x, 1))) %>% 
+  mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
+  mutate(POA_NAME16 = fct_reorder(as.factor(POA_NAME16), .data[[VAR]])) %>% 
+  plot_map_TL(SYD_POA, "POA_NAME16", VAR, 
+           paste0(VAR, " by POA (SYD)"), fill_col = COLOR, 
+           show_count = F, label_size = 2, return_obj = "map")
+}
+
+grid.arrange(
+plot_census_map("high_income", "darkorange")
+,plot_census_map("p_income", "grey23")
+,plot_census_map("chinese_p", "darkred")
+,plot_census_map("non_english_n", "darkgreen")
+,plot_census_map("rent_distress", "darkblue")
+,plot_census_map("unit", "deepskyblue")
+, ncol=2)
+```
+
 
 # Gravity
 ## South Eastern SYD (2026) {.tabset}

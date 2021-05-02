@@ -29,8 +29,8 @@ plot_map_TL <- function(df, sdf, key_var, fill_var, title_text,
           legend.title = element_text(size = 10),
           legend.text = element_text(size = 10),
           legend.key.size = unit(1,"line"),
-          plot.title = element_text(hjust = 0.5), 
-          plot.subtitle=element_text(hjust = 0.5))
+          plot.title = element_text(hjust = 0), 
+          plot.subtitle=element_text(hjust = 0))
   
   if (show_count) {
     sdf_centroids <- getSpPPolygonsLabptSlots(sdf) %>% as.data.frame()
