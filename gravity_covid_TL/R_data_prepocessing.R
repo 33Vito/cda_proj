@@ -7,9 +7,9 @@ census_feature_by_POA <- read_csv("data/census_feature_by_POA_imputed_v2.csv")
 set.seed(123)
 census_clusters <- bind_cols(
   census_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
-    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+    helper_clustering(k=10) %>% pull(cluster) %>% as.factor(), 
   census_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
-    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+    helper_h_clustering(k=10) %>% pull(cluster) %>% as.factor()
 ) %>% 
   as_tibble() %>% 
   `colnames<-`(c("kcluster", "hcluster")) %>% 
@@ -310,9 +310,9 @@ combined_feature_by_POA <- SYD_POA_gravity %>%
 
 combined_clusters <- bind_cols(
   combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
-    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+    helper_clustering(k=10) %>% pull(cluster) %>% as.factor(), 
   combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
-    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+    helper_h_clustering(k=10) %>% pull(cluster) %>% as.factor()
 ) %>% 
   as_tibble() %>% 
   `colnames<-`(c("kcluster", "hcluster")) %>% 
@@ -323,9 +323,9 @@ combined_clusters <- bind_cols(
 # ----------------Cluster based on gravity only------------------
 gravity_clusters <- bind_cols(
   combined_feature_by_POA[,2] %>% 
-    helper_clustering(k=5) %>% pull(cluster) %>% as.factor(), 
+    helper_clustering(k=10) %>% pull(cluster) %>% as.factor(), 
   combined_feature_by_POA[,2] %>% 
-    helper_h_clustering(k=5) %>% pull(cluster) %>% as.factor()
+    helper_h_clustering(k=10) %>% pull(cluster) %>% as.factor()
 ) %>% 
   as_tibble() %>% 
   `colnames<-`(c("kcluster", "hcluster")) %>% 
