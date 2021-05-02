@@ -399,8 +399,8 @@ baseline_cases <- confirmed_cases %>%
   # --------------------------------------------
   arrange(notification_date, postcode) %>% 
   mutate(case = 1:nrow(.)) %>% 
-  # ----add indicator of cases avoided by adjacent POA cases within 14 days----
-  mutate(avoided_by_adjacent_lockdown = map2_lgl(
+  # ----add indicator of cases prevented by adjacent POA cases within 14 days----
+  mutate(prevented_by_adjacent_lockdown = map2_lgl(
     notification_date, adjacent_postcode, function(x, y) {
       confirmed_cases %>% 
         filter(notification_date < x, 
@@ -410,8 +410,8 @@ baseline_cases <- confirmed_cases %>%
       n_adjacent_case_within14days > 0
     }
   )) %>% 
-  # ---add indicator of cases avoided by LGA cases within 14 days------
-mutate(avoided_by_lga_lockdown = map2_lgl(
+  # ---add indicator of cases prevented by LGA cases within 14 days------
+mutate(prevented_by_lga_lockdown = map2_lgl(
   notification_date, lga_name19, function(x, y) {
     confirmed_cases %>% 
       filter(notification_date < x, 
@@ -421,8 +421,8 @@ mutate(avoided_by_lga_lockdown = map2_lgl(
     n_lga_case_within14days > 0
   }
 )) %>% 
-# ---add indicator of cases avoided by LHD cases within 14 days------
-mutate(avoided_by_lhd_lockdown = map2_lgl(
+# ---add indicator of cases prevented by LHD cases within 14 days------
+mutate(prevented_by_lhd_lockdown = map2_lgl(
   notification_date, lhd_2010_name, function(x, y) {
     confirmed_cases %>% 
       filter(notification_date < x, 
@@ -432,8 +432,8 @@ mutate(avoided_by_lhd_lockdown = map2_lgl(
     n_lhd_case_within14days > 0
   }
 )) %>% 
-  # ---add indicator of cases avoided by SYD cases within 14 days------
-mutate(avoided_by_syd_lockdown = map_lgl(
+  # ---add indicator of cases prevented by SYD cases within 14 days------
+mutate(prevented_by_syd_lockdown = map_lgl(
   notification_date, function(x, y) {
     confirmed_cases %>% 
       filter(notification_date < x, 
@@ -446,7 +446,7 @@ mutate(avoided_by_syd_lockdown = map_lgl(
 
 # ----function to produce avoid_indc by left_join------------------------
 # save this function here to allow context to understand what it does-------
-check_avoided_cases <- function(case_df = baseline_cases, 
+check_prevented_cases <- function(case_df = baseline_cases, 
                                 cluster_df = census_clusters, 
                                 cluster_var = "kcluster", n=14) {
   
@@ -471,8 +471,8 @@ check_avoided_cases <- function(case_df = baseline_cases,
   # n_CLUSTER_case_within14days > 0
 }
 
-# check_avoided_cases() %>% mean
-# check_avoided_cases(case_df = baseline_cases %>%
+# check_prevented_cases() %>% mean
+# check_prevented_cases(case_df = baseline_cases %>%
 #                       select(postcode, notification_date, case),
 #                     cluster_df = confirmed_cases %>%
 #                       mutate(POA_NAME16 = as.character(postcode)) %>%
