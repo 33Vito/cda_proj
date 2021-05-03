@@ -793,6 +793,7 @@ turn_lockdown_period_result[1:20] %>%
   # xlim(c(0,25)) + 
   # facet_wrap(~key) + 
   ggy(percent, name="% of cases prevented by lockdown") + 
+  labs(subtitle = "Sensitivity of the duration of the lockdown period on the effectiveness of the lockdown") + 
   ggl(c(.8, .4))
 ,
 turn_lockdown_period_result[1:20] %>% 
