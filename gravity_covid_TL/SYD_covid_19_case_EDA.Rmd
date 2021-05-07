@@ -20,7 +20,7 @@ options(scipen=999, expressions=50000,
                           scrollX = TRUE,
                           dom = 'Bfrtip',
                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), 
-                          autoWidth = TRUE)) 
+                          autoWidth = TRUE))  
 
 knitr::opts_chunk$set(echo = T, message=F, warning=F, fig.width=9.5, fig.height=4)
 knitr::opts_knit$set(dev.args = list(type = "cairo"), progress=FALSE)

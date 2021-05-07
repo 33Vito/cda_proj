@@ -312,13 +312,16 @@ combined_clusters <- bind_cols(
   combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
     helper_clustering(k=10) %>% pull(cluster) %>% as.factor(), 
   combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
-    helper_h_clustering(k=10) %>% pull(cluster) %>% as.factor()
+    helper_h_clustering(k=10) %>% pull(cluster) %>% as.factor(), 
+  combined_feature_by_POA[,-1] %>% helper_pc_convert() %>% 
+    kknn::specClust(centers = nrow(combined_feature_by_POA)/10) %>% 
+    .$cluster %>% as.factor()
 ) %>% 
   as_tibble() %>% 
-  `colnames<-`(c("kcluster", "hcluster")) %>% 
+  `colnames<-`(c("kcluster", "hcluster", "scluster")) %>% 
   bind_cols(combined_feature_by_POA[,1]) %>% 
   mutate(POA_NAME16 = as.character(POA_CODE_2016)) %>% 
-  select(POA_NAME16, kcluster, hcluster)
+  select(POA_NAME16, kcluster, hcluster, scluster)
 
 # ----------------Cluster based on gravity only------------------
 gravity_clusters <- bind_cols(

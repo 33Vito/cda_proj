@@ -474,6 +474,10 @@ SYD_POA_gravity %>%
            check_prevented_cases(case_df = baseline_cases, 
                                cluster_df = combined_clusters, 
                                cluster_var = "hcluster")) %>% 
+  mutate(prevented_by_combined_scluster_lockdown = 
+           check_prevented_cases(case_df = baseline_cases, 
+                               cluster_df = combined_clusters, 
+                               cluster_var = "scluster")) %>% 
   
   mutate(prevented_by_hybrid_lockdown = prevented_by_gravity_lockdown | prevented_by_census_kcluster_lockdown | prevented_by_census_hcluster_lockdown) %>% 
   
